@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔兽世界代练录单工具</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
+        }
+        body {
+            padding: 10px;
+            background-color: #0a0c12;
+            color: #c8b384;
+            line-height: 1.6;
+            min-height: 100vh;
+            background-image: url('https://i.postimg.cc/nLH8yWCR/b1639839-5bc1-4a0d-90bc-932e5dc4feba.png');
+            background-size: cover;
+            background-position: center top;
+            background-attachment: fixed;
+        }
+        .container {
+            max-width: 1400px;
+            /* 修改这里调整顶部高度 - 增加margin-top值使容器下移 */
+            margin: 200px auto 20px;
+            background: rgba(16, 18, 26, 0.9);
+            overflow: hidden;
+            border: 1px solid #3d4b6a;
+            backdrop-filter: blur(5px);
+        }
+        header {
+            background: transparent;
+            color: #ffd100;
+            padding: 20px 30px 10px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        h1 {
+            margin-bottom: 5px;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 209, 0, 0.5);
+            position: relative;
+            letter-spacing: 2px;
+        }
+        .content {
+            padding: 20px 30px 30px;
+        }
+        .input-section {
+            margin-bottom: 25px;
+        }
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 15px;
+            border: 1px solid #5e728f;
+            border-radius: 0;
+            resize: vertical;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: rgba(25, 30, 45, 0.8);
+            color: #c8b384;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+        textarea:focus {
+            outline: none;
+            border-color: #9ebcdf;
+            box-shadow: 0 0 0 2px rgba(158, 188, 223, 0.3), inset 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+        textarea::placeholder {
+            color: #6d7fa3;
+        }
+        .button-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 15px;
+        }
+        button {
+            padding: 14px 20px;
+            background: linear-gradient(to bottom, #5e728f, #3d4b6a);
+            color: #fff;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+            flex: 1;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid #7a8ca9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+        button:hover::before {
+            left: 100%;
+        }
+        button:hover {
+            background: linear-gradient(to bottom, #6e84a3, #4a5b7e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5);
+        }
+        button.copy {
+            background: linear-gradient(to bottom, #a89265, #7a6c4f);
+            border: 1px solid #c8b384;
+            flex: 1.2;
+        }
+        button.copy:hover {
+            background: linear-gradient(to bottom, #c8b384, #8e805b);
+        }
+        button.clear {
+            background: linear-gradient(to bottom, #8c3b3b, #5e2828);
+            border: 1px solid #a04a4a;
+            flex: 0.8;
+        }
+        button.clear:hover {
+            background: linear-gradient(to bottom, #a04a4a, #723232);
+        }
+        .result-section {
+            margin-top: 25px;
+            overflow-x: auto;
+        }
+        .result-section h2 {
+            color: #ffd100;
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 209, 0, 0.3);
+            border-bottom: 2px solid #5e728f;
+            padding-bottom: 8px;
+        }
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background: rgba(25, 30, 45, 0.8);
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+            border-radius: 0;
+        }
+        .result-table th {
+            background: rgba(35, 42, 62, 0.7);
+            padding: 14px 16px;
+            text-align: center;
+            font-weight: bold;
+            color: #ffd100;
+            white-space: nowrap;
+            border: 1px solid #5e728f;
+            text-shadow: 0 0 5px rgba(255, 209, 0, 0.3);
+            font-size: 15px;
+        }
+        .result-table td {
+            padding: 14px 16px;
+            background: rgba(35, 42, 62, 0.6);
+            text-align: center;
+            color: #c8b384;
+            border: 1px solid #5e728f;
+            font-size: 14px;
+        }
+        .instructions {
+            background: rgba(25, 30, 45, 0.8);
+            padding: 18px;
+            margin-top: 25px;
+            border: 1px solid #5e728f;
+            border-radius: 0;
+        }
+        .instructions h3 {
+            margin-bottom: 12px;
+            color: #ffd100;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 209, 0, 0.3);
+            font-size: 18px;
+        }
+        .instructions ol {
+            padding-left: 25px;
+        }
+        .instructions li {
+            margin-bottom: 10px;
+            color: #a89265;
+            font-size: 15px;
+        }
+        .keyword-config {
+            background: rgba(25, 30, 45, 0.8);
+            padding: 18px;
+            margin-top: 25px;
+            border: 1px solid #5e728f;
+            border-radius: 0;
+        }
+        .keyword-config h3 {
+            margin-bottom: 12px;
+            color: #ffd100;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255, 209, 0, 0.3);
+            font-size: 18px;
+        }
+        .keyword-config h3::after {
+            content: "▶";
+            margin-left: 8px;
+            font-size: 14px;
+        }
+        .keyword-config.collapsed h3::after {
+            content: "▼";
+        }
+        .keyword-config-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            max-height: 0;
+        }
+        .keyword-config:not(.collapsed) .keyword-config-content {
+            max-height: 1000px;
+        }
+        .keyword-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            border-radius: 0;
+        }
+        .keyword-table th, .keyword-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid #5e728f;
+        }
+        .keyword-table th {
+            background: rgba(41, 50, 75, 0.6);
+            color: #ffd100;
+            font-weight: bold;
+        }
+        .keyword-table td {
+            background: rgba(35, 42, 62, 0.6);
+        }
+        input[type="text"] {
+            width: 100%;
+            background: rgba(25, 30, 45, 0.9);
+            color: #c8b384;
+            border: 1px solid #5e728f;
+            padding: 8px;
+            border-radius: 0;
+            font-size: 14px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding: 20px;
+            color: #6d7fa3;
+            font-size: 13px;
+            border-top: 1px solid #5e728f;
+        }
+        .wow-logo {
+            font-size: 24px;
+            margin-right: 8px;
+        }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 18px;
+            background: rgba(41, 50, 75, 0.95);
+            color: #ffd100;
+            border-radius: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 1000;
+            border: 1px solid #5e728f;
+            font-weight: bold;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        @media (max-width: 992px) {
+            .button-group {
+                flex-wrap: wrap;
+            }
+            button {
+                flex: 1 0 45%;
+            }
+        }
+        @media (max-width: 768px) {
+            .button-group {
+                flex-direction: column;
+            }
+            .result-table {
+                font-size: 13px;
+            }
+            .result-table th, .result-table td {
+                padding: 10px 12px;
+            }
+            h1 {
+                font-size: 26px;
+            }
+            .container {
+                /* 移动设备上适当调整顶部间距 */
+                margin-top: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><span class="wow-logo">⚔️</span>破坏之王魔兽工作室 专用录单工具</h1>
+        </header>
+
+        <div class="content">
+            <div class="input-section">
+                <textarea id="inputText" placeholder="请将老板资料粘贴到这里，例如：
+服务器名:
+部落/联盟:
+职业:
+天赋:
+角色名:
+装等:
+账号:
+密码:
+子账号:
+联系电话:
+拾取专精:
+订单备注:
+本周暗号:
+订单编号:
+买家旺旺:
+代练项目:"></textarea>
+                
+                <div class="button-group">
+                    <button id="parseBtn">提取信息</button>
+                    <button id="copyBtn" class="copy">复制结果</button>
+                    <button id="clearBtn" class="clear">清空</button>
+                </div>
+            </div>
+
+            <div class="result-section">
+                <h2>提取结果（横向布局）</h2>
+                <table class="result-table">
+                    <thead>
+                        <tr>
+                            <th>订单备注</th>
+                            <th>订单项目</th>
+                            <th>角色名</th>
+                            <th>职业</th>
+                            <th>装等/天赋</th>
+                            <th>游戏</th>
+                            <th>服务器区域</th>
+                            <th>服务器名</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="orderNote"></td>
+                            <td id="orderItem"></td>
+                            <td id="characterName"></td>
+                            <td id="profession"></td>
+                            <td id="equipmentLevelTalent"></td>
+                            <td id="gameType">魔兽世界</td>
+                            <td id="serverRegion">全部</td>
+                            <td id="serverName"></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="keyword-config collapsed" id="keywordConfig">
+                <h3>关键字配置 (点击展开/折叠)</h3>
+                <div class="keyword-config-content">
+                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。</p>
+                    <table class="keyword-table">
+                        <thead>
+                            <tr>
+                                <th>字段名</th>
+                                <th>识别关键字（用空格分隔）</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>订单备注</td>
+                                <td><input type="text" id="orderNoteKeywords" value="订单备注 备注 其他备注 暗号 （暗号） (暗号)"></td>
+                            </tr>
+                            <tr>
+                                <td>订单项目</td>
+                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容"></td>
+                            </tr>
+                            <tr>
+                                <td>角色名</td>
+                                <td><input type="text" id="characterNameKeywords" value="角色名 角色 角色名字 名字 昵称"></td>
+                            </tr>
+                            <tr>
+                                <td>职业</td>
+                                <td><input type="text" id="professionKeywords" value="职业 角色职业 专精 职业天赋 职业/天赋"></td>
+                            </tr>
+                            <tr>
+                                <td>装等</td>
+                                <td><input type="text" id="equipmentLevelKeywords" value="装等 装备等级 物品等级"></td>
+                            </tr>
+                            <tr>
+                                <td>天赋</td>
+                                <td><input type="text" id="talentKeywords" value="天赋 专精"></td>
+                            </tr>
+                            <tr>
+                                <td>服务器名</td>
+                                <td><input type="text" id="serverNameKeywords" value="服务器名 服务器 区服 服务器名称 服务器名字"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 12px;">
+                        <button id="saveKeywordsBtn" style="padding: 8px 15px; background: linear-gradient(to bottom, #5e728f, #3d4b6a);">保存关键字配置</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="instructions">
+                <h3>使用说明</h3>
+                <ol>
+                    <li>将老板资料粘贴到上方文本框中</li>
+                    <li>根据需要配置关键字（点击"关键字配置"展开）</li>
+                    <li>点击"提取信息"按钮解析内容</li>
+                    <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
+                    <li>切换到WPS表格，选择要粘贴的单元格，按Ctrl+V粘贴</li>
+                    <li>如需业务合作，或对工具有任何建议，请添加微信：vpeipeix</li>
+                </ol>
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2025 破坏之王魔兽世界工作室</p>
+        </footer>
+    </div>
+
+    <div class="notification" id="notification">复制成功！可以粘贴到WPS表格中</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputText = document.getElementById('inputText');
+            const parseBtn = document.getElementById('parseBtn');
+            const copyBtn = document.getElementById('copyBtn');
+            const clearBtn = document.getElementById('clearBtn');
+            const saveKeywordsBtn = document.getElementById('saveKeywordsBtn');
+            const keywordConfig = document.getElementById('keywordConfig');
+            const notification = document.getElementById('notification');
+            
+            // 字段元素
+            const orderNote = document.getElementById('orderNote');
+            const orderItem = document.getElementById('orderItem');
+            const characterName = document.getElementById('characterName');
+            const profession = document.getElementById('profession');
+            const equipmentLevelTalent = document.getElementById('equipmentLevelTalent');
+            const gameType = document.getElementById('gameType');
+            const serverRegion = document.getElementById('serverRegion');
+            const serverName = document.getElementById('serverName');
+            
+            // 保存关键字配置
+            function saveKeywords() {
+                currentKeywords = {
+                    orderNote: document.getElementById('orderNoteKeywords').value.split(/\s+/).filter(k => k),
+                    orderItem: document.getElementById('orderItemKeywords').value.split(/\s+/).filter(k => k),
+                    characterName: document.getElementById('characterNameKeywords').value.split(/\s+/).filter(k => k),
+                    profession: document.getElementById('professionKeywords').value.split(/\s+/).filter(k => k),
+                    equipmentLevel: document.getElementById('equipmentLevelKeywords').value.split(/\s+/).filter(k => k),
+                    talent: document.getElementById('talentKeywords').value.split(/\s+/).filter(k => k),
+                    serverName: document.getElementById('serverNameKeywords').value.split(/\s+/).filter(k => k)
+                };
+                
+                // 保存到本地存储
+                localStorage.setItem('wowKeywords', JSON.stringify(currentKeywords));
+                showNotification('关键字配置已保存！');
+            }
+            
+            // 从本地存储加载关键字配置
+            function loadKeywords() {
+                const savedKeywords = localStorage.getItem('wowKeywords');
+                if (savedKeywords) {
+                    currentKeywords = JSON.parse(savedKeywords);
+                }
+                initKeywordInputs();
+            }
+            
+            // 根据关键字提取字段值
+            function extractValueByKeywords(text, keywords) {
+                const lines = text.split('\n');
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    const colonIndex = line.indexOf(':');
+                    
+                    if (colonIndex > 0) {
+                        const key = line.substring(0, colonIndex).trim();
+                        const value = line.substring(colonIndex + 1).trim();
+                        
+                        // 检查是否匹配任何关键字
+                        for (const keyword of keywords) {
+                            if (key === keyword) {
+                                return value;
+                            }
+                        }
+                    }
+                }
+                
+                return "";
+            }
+            
+            // 解析文本函数
+            function parseText() {
+                const text = inputText.value;
+                
+                const result = {
+                    订单备注: extractValueByKeywords(text, currentKeywords.orderNote),
+                    订单项目: extractValueByKeywords(text, currentKeywords.orderItem),
+                    角色名: extractValueByKeywords(text, currentKeywords.characterName),
+                    职业: extractValueByKeywords(text, currentKeywords.profession),
+                    装等: extractValueByKeywords(text, currentKeywords.equipmentLevel),
+                    天赋: extractValueByKeywords(text, currentKeywords.talent),
+                    服务器名: extractValueByKeywords(text, currentKeywords.serverName)
+                };
+                
+                // 更新页面显示
+                orderNote.textContent = result.订单备注;
+                orderItem.textContent = result.订单项目;
+                characterName.textContent = result.角色名;
+                profession.textContent = result.职业;
+                equipmentLevelTalent.textContent = `${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}`;
+                serverName.textContent = result.服务器名;
+            }
+            
+            // 复制结果函数
+            function copyResults() {
+                const values = [
+                    orderNote.textContent,
+                    orderItem.textContent,
+                    characterName.textContent,
+                    profession.textContent,
+                    equipmentLevelTalent.textContent,
+                    gameType.textContent,
+                    serverRegion.textContent,
+                    serverName.textContent
+                ];
+                
+                // 使用制表符分隔，方便粘贴到表格
+                const textToCopy = values.join('\t');
+                
+                // 创建一个临时的textarea元素来执行复制
+                const textarea = document.createElement('textarea');
+                textarea.value = textToCopy;
+                document.body.appendChild(textarea);
+                textarea.select();
+                
+                try {
+                    const successful = document.execCommand('copy');
+                    if (successful) {
+                        showNotification('复制成功！可以粘贴到WPS表格中');
+                    } else {
+                        showNotification('复制失败，请手动复制');
+                    }
+                } catch (err) {
+                    console.error('复制失败:', err);
+                    showNotification('复制失败，请手动复制');
+                }
+                
+                document.body.removeChild(textarea);
+            }
+            
+            // 清空函数
+            function clearAll() {
+                inputText.value = '';
+                orderNote.textContent = '';
+                orderItem.textContent = '';
+                characterName.textContent = '';
+                profession.textContent = '';
+                equipmentLevelTalent.textContent = '';
+                serverName.textContent = '';
+            }
+            
+            // 显示通知
+            function showNotification(message) {
+                notification.textContent = message;
+                notification.classList.add('show');
+                
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                }, 3000);
+            }
+            
+            // 添加事件监听器
+            parseBtn.addEventListener('click', parseText);
+            copyBtn.addEventListener('click', copyResults);
+            clearBtn.addEventListener('click', clearAll);
+            saveKeywordsBtn.addEventListener('click', saveKeywords);
+            
+            // 关键字配置区域折叠/展开
+            keywordConfig.addEventListener('click', function(e) {
+                if (e.target.tagName === 'H3') {
+                    keywordConfig.classList.toggle('collapsed');
+                }
+            });
+            
+            // 初始化
+            loadKeywords();
+            
+            // 清空文本框内容
+            inputText.value = "";
+        });
+    </script>
+</body>
+</html>
