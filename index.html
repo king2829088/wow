@@ -378,7 +378,7 @@
             <div class="keyword-config collapsed" id="keywordConfig">
                 <h3>关键字配置 (点击展开/折叠)</h3>
                 <div class="keyword-config-content">
-                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。</p>
+                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。<br>注意：关键字匹配采用部分匹配方式，只要字段名称中包含关键字就会被识别。</p>
                     <table class="keyword-table">
                         <thead>
                             <tr>
@@ -389,31 +389,31 @@
                         <tbody>
                             <tr>
                                 <td>订单备注</td>
-                                <td><input type="text" id="orderNoteKeywords" value="订单备注 备注 其他备注 暗号 （暗号） (暗号)"></td>
+                                <td><input type="text" id="orderNoteKeywords" value="订单备注 备注 其他备注"></td>
                             </tr>
                             <tr>
                                 <td>订单项目</td>
-                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容"></td>
+                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 需求 要求"></td>
                             </tr>
                             <tr>
                                 <td>角色名</td>
-                                <td><input type="text" id="characterNameKeywords" value="角色名 角色 角色名字 名字 昵称"></td>
+                                <td><input type="text" id="characterNameKeywords" value="角色名 角色 游戏ID ID"></td>
                             </tr>
                             <tr>
                                 <td>职业</td>
-                                <td><input type="text" id="professionKeywords" value="职业 角色职业 专精 职业天赋 职业/天赋"></td>
+                                <td><input type="text" id="professionKeywords" value="职业 角色职业"></td>
                             </tr>
                             <tr>
                                 <td>装等</td>
-                                <td><input type="text" id="equipmentLevelKeywords" value="装等 装备等级 物品等级"></td>
+                                <td><input type="text" id="equipmentLevelKeywords" value="装等 装备等级 物品等级 ilv"></td>
                             </tr>
                             <tr>
                                 <td>天赋</td>
-                                <td><input type="text" id="talentKeywords" value="天赋 专精"></td>
+                                <td><input type="text" id="talentKeywords" value="天赋 专精 定位"></td>
                             </tr>
                             <tr>
                                 <td>服务器名</td>
-                                <td><input type="text" id="serverNameKeywords" value="服务器名 服务器 区服 服务器名称 服务器名字"></td>
+                                <td><input type="text" id="serverNameKeywords" value="服务器名 服务器 区服 大区"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -489,7 +489,7 @@
                 initKeywordInputs();
             }
             
-            // 根据关键字提取字段值
+            // 根据关键字提取字段值（使用部分匹配）
             function extractValueByKeywords(text, keywords) {
                 const lines = text.split('\n');
                 
@@ -501,9 +501,9 @@
                         const key = line.substring(0, colonIndex).trim();
                         const value = line.substring(colonIndex + 1).trim();
                         
-                        // 检查是否匹配任何关键字
+                        // 检查是否包含任何关键字（部分匹配）
                         for (const keyword of keywords) {
-                            if (key === keyword) {
+                            if (key.includes(keyword)) {
                                 return value;
                             }
                         }
