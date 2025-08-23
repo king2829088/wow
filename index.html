@@ -389,11 +389,11 @@
                         <tbody>
                             <tr>
                                 <td>订单备注</td>
-                                <td><input type="text" id="orderNoteKeywords" value="订单备注 备注 其他备注"></td>
+                                <td><input type="text" id="orderNoteKeywords" value="（暗号） 订单备注 备注 其他备注 "></td>
                             </tr>
                             <tr>
                                 <td>订单项目</td>
-                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容"></td>
+                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容 代练/陪玩"></td>
                             </tr>
                             <tr>
                                 <td>角色名</td>
@@ -401,7 +401,7 @@
                             </tr>
                             <tr>
                                 <td>职业</td>
-                                <td><input type="text" id="professionKeywords" value="职业 角色职业 职业天赋 职业/天赋"></td>
+                                <td><input type="text" id="professionKeywords" value="职业 角色职业 职业天赋 职业/天赋 天赋/装等"></td>
                             </tr>
                             <tr>
                                 <td>装等</td>
@@ -494,23 +494,51 @@
                 const lines = text.split('\n');
                 
                 for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    const colonIndex = line.indexOf(':');
+                    let line = lines[i].trim();
                     
-                    if (colonIndex > 0) {
-                        const key = line.substring(0, colonIndex).trim();
-                        const value = line.substring(colonIndex + 1).trim();
-                        
-                        // 检查是否包含任何关键字（部分匹配）
-                        for (const keyword of keywords) {
-                            if (key.includes(keyword)) {
-                                return value;
+                    // 检查是否包含任何关键字（部分匹配）
+                    for (const keyword of keywords) {
+                        if (line.includes(keyword)) {
+                            // 找到关键字位置
+                            const keywordIndex = line.indexOf(keyword);
+                            
+                            // 获取关键字后面的内容
+                            let valuePart = line.substring(keywordIndex + keyword.length);
+                            
+                            // 处理各种分隔符情况
+                            // 移除可能的分隔符（冒号、空格等）
+                            valuePart = valuePart.replace(/^[\s:：]+/, '');
+                            
+                            // 如果还有内容，返回它
+                            if (valuePart.length > 0) {
+                                return valuePart;
+                            }
+                            
+                            // 如果关键字后面没有内容，尝试从下一行获取值
+                            if (i + 1 < lines.length) {
+                                const nextLine = lines[i + 1].trim();
+                                // 如果下一行不是以关键字开头，则可能是值
+                                if (nextLine.length > 0 && !isKeywordLine(nextLine, currentKeywords)) {
+                                    return nextLine;
+                                }
                             }
                         }
                     }
                 }
                 
                 return "";
+            }
+            
+            // 检查一行是否包含任何关键字
+            function isKeywordLine(line, allKeywords) {
+                for (const category in allKeywords) {
+                    for (const keyword of allKeywords[category]) {
+                        if (line.includes(keyword)) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
             }
             
             // 解析文本函数
