@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔兽世界代练录单工具</title>
+    <title>魔兽世界代练录单工具 - Bata1.1</title>
     <style>
         * {
             box-sizing: border-box;
@@ -19,12 +19,11 @@
             min-height: 100vh;
             background-image: url('https://i.postimg.cc/nLH8yWCR/b1639839-5bc1-4a0d-90bc-932e5dc4feba.png');
             background-size: cover;
-            background-position: center top;
             background-attachment: fixed;
+            background-position: center top;
         }
         .container {
-            max-width: 1400px;
-            /* 修改这里调整顶部高度 - 增加margin-top值使容器下移 */
+            max-width: 1600px;
             margin: 200px auto 20px;
             background: rgba(16, 18, 26, 0.9);
             overflow: hidden;
@@ -78,6 +77,7 @@
             display: flex;
             gap: 12px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
         button {
             padding: 14px 20px;
@@ -95,6 +95,7 @@
             overflow: hidden;
             border: 1px solid #7a8ca9;
             text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            min-width: 120px;
         }
         button::before {
             content: '';
@@ -117,7 +118,6 @@
         button.copy {
             background: linear-gradient(to bottom, #a89265, #7a6c4f);
             border: 1px solid #c8b384;
-            flex: 1.2;
         }
         button.copy:hover {
             background: linear-gradient(to bottom, #c8b384, #8e805b);
@@ -125,10 +125,9 @@
         button.clear {
             background: linear-gradient(to bottom, #8c3b3b, #5e2828);
             border: 1px solid #a04a4a;
-            flex: 0.8;
         }
         button.clear:hover {
-            background: linear-gradient(to bottom, #a04a4a, #723232);
+            background: linear-gradient(to bottom, #a04a4a, #723032);
         }
         .result-section {
             margin-top: 25px;
@@ -150,7 +149,8 @@
             background: rgba(25, 30, 45, 0.8);
             overflow: hidden;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-            border-radius: 0;
+            table-layout: fixed;
+            font-family: 'Microsoft YaHei', sans-serif;
         }
         .result-table th {
             background: rgba(35, 42, 62, 0.7);
@@ -170,6 +170,21 @@
             color: #c8b384;
             border: 1px solid #5e728f;
             font-size: 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            word-wrap: break-word;
+            vertical-align: middle;
+        }
+        .result-table .order-note {
+            max-width: 150px;
+        }
+        .result-table .full-data {
+            text-align: left;
+            max-width: 300px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .instructions {
             background: rgba(25, 30, 45, 0.8);
@@ -284,6 +299,44 @@
         .notification.show {
             transform: translateX(0);
         }
+        .copy-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .copy-option {
+            display: flex;
+            align-items: center;
+            background: rgba(25, 30, 45, 0.8);
+            padding: 8px 12px;
+            border: 1px solid #5e728f;
+            cursor: pointer;
+        }
+        .copy-option input {
+            margin-right: 6px;
+        }
+        .copy-option label {
+            cursor: pointer;
+            color: #a89265;
+            font-size: 14px;
+        }
+        .copy-full-btn {
+            padding: 8px 12px;
+            background: linear-gradient(to bottom, #a89265, #7a6c4f);
+            color: #fff;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            text-align: center;
+        }
+        .copy-full-btn:hover {
+            background: linear-gradient(to bottom, #c8b384, #8e805b);
+        }
         @media (max-width: 992px) {
             .button-group {
                 flex-wrap: wrap;
@@ -306,8 +359,11 @@
                 font-size: 26px;
             }
             .container {
-                /* 移动设备上适当调整顶部间距 */
-                margin-top: 100px;
+                margin-top: 180px;
+            }
+            .copy-full-btn {
+                font-size: 12px;
+                padding: 6px 8px;
             }
         }
     </style>
@@ -315,33 +371,41 @@
 <body>
     <div class="container">
         <header>
-            <h1><span class="wow-logo">⚔️</span>破坏之王魔兽工作室 专用录单工具</h1>
+            <h1><span class="wow-logo">⚔️</span>魔兽代练录单工具</h1>
         </header>
 
         <div class="content">
             <div class="input-section">
-                <textarea id="inputText" placeholder="请将老板资料粘贴到这里，例如：
-服务器名:
-部落/联盟:
-职业:
-天赋:
-角色名:
-装等:
-账号:
-密码:
-子账号:
-联系电话:
-拾取专精:
-订单备注:
-本周暗号:
-订单编号:
-买家旺旺:
-代练项目:"></textarea>
+                <textarea id="inputText" placeholder="请将老板资料粘贴到这里，可以一次粘贴多组资料，用空行分隔。例如：
+服务器名:金色平原
+部落/联盟:联盟
+职业:战士
+天赋:武器
+角色名:战士一号
+装等:480
+
+服务器名:死亡之翼
+部落/联盟:部落
+职业:法师
+天赋:冰霜
+角色名:法师一号
+装等:475"></textarea>
                 
                 <div class="button-group">
                     <button id="parseBtn">提取信息</button>
                     <button id="copyBtn" class="copy">复制结果</button>
                     <button id="clearBtn" class="clear">清空</button>
+                </div>
+                
+                <div class="copy-options">
+                    <div class="copy-option">
+                        <input type="radio" id="copyFormat1" name="copyFormat" value="wps" checked>
+                        <label for="copyFormat1">WPS格式（职业染色，不带完整资料）</label>
+                    </div>
+                    <div class="copy-option">
+                        <input type="radio" id="copyFormat3" name="copyFormat" value="plain">
+                        <label for="copyFormat3">纯文本格式（无染色，带完整资料）</label>
+                    </div>
                 </div>
             </div>
 
@@ -358,19 +422,11 @@
                             <th>游戏</th>
                             <th>服务器区域</th>
                             <th>服务器名</th>
+                            <th><button class="copy-full-btn" id="copyFullDataBtn">复制全部资料</button></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td id="orderNote"></td>
-                            <td id="orderItem"></td>
-                            <td id="characterName"></td>
-                            <td id="profession"></td>
-                            <td id="equipmentLevelTalent"></td>
-                            <td id="gameType">魔兽世界</td>
-                            <td id="serverRegion">全部</td>
-                            <td id="serverName"></td>
-                        </tr>
+                    <tbody id="resultBody">
+                        <!-- 结果将动态添加到这里 -->
                     </tbody>
                 </table>
             </div>
@@ -389,7 +445,7 @@
                         <tbody>
                             <tr>
                                 <td>订单备注</td>
-                                <td><input type="text" id="orderNoteKeywords" value="（暗号） 订单备注 备注 其他备注 "></td>
+                                <td><input type="text" id="orderNoteKeywords" value="（暗号） 订单备注 其他备注 备注"></td>
                             </tr>
                             <tr>
                                 <td>订单项目</td>
@@ -397,11 +453,11 @@
                             </tr>
                             <tr>
                                 <td>角色名</td>
-                                <td><input type="text" id="characterNameKeywords" value="角色名 角色 角色名字 名字 昵称"></td>
+                                <td><input type="text" id="characterNameKeywords" value="角色名字 角色名 角色 名字 昵称"></td>
                             </tr>
                             <tr>
                                 <td>职业</td>
-                                <td><input type="text" id="professionKeywords" value="职业 角色职业 职业天赋 职业/天赋 天赋/装等"></td>
+                                <td><input type="text" id="professionKeywords" value="职业天赋/装等 职业/天赋 职业天赋 职业 角色职业"></td>
                             </tr>
                             <tr>
                                 <td>装等</td>
@@ -409,16 +465,17 @@
                             </tr>
                             <tr>
                                 <td>天赋</td>
-                                <td><input type="text" id="talentKeywords" value="天赋 专精 定位"></td>
+                                <td><input type="text" id="talentKeywords" value="天赋/装等 天赋 专精 定位"></td>
                             </tr>
                             <tr>
                                 <td>服务器名</td>
-                                <td><input type="text" id="serverNameKeywords" value="服务器名 服务器 区服 服务器名称 服务器名字"></td>
+                                <td><input type="text" id="serverNameKeywords" value="服务器名字 服务器名称 服务器名 服务器 区服"></td>
                             </tr>
                         </tbody>
                     </table>
-                    <div style="margin-top: 12px;">
-                        <button id="saveKeywordsBtn" style="padding: 8px 15px; background: linear-gradient(to bottom, #5e728f, #3d4b6a);">保存关键字配置</button>
+                    <div style="margin-top: 12px; display: flex; gap: 12px;">
+                        <button id="saveKeywordsBtn" style="padding: 8px 15px; flex: 1;">保存关键字配置</button>
+                        <button id="resetKeywordsBtn" style="padding: 8px 15px; flex: 1; background: linear-gradient(to bottom, #8c3b3b, #5e2828);">恢复默认配置</button>
                     </div>
                 </div>
             </div>
@@ -426,11 +483,13 @@
             <div class="instructions">
                 <h3>使用说明</h3>
                 <ol>
-                    <li>将老板资料粘贴到上方文本框中</li>
-                    <li>根据需要配置关键字（点击"关键字配置"展开）</li>
+                    <li>将老板资料粘贴到上方文本框中（支持一次粘贴多组资料，用空行分隔）</li>
                     <li>点击"提取信息"按钮解析内容</li>
+                    <li>选择复制格式：WPS格式（含职业染色，不含完整资料）或纯文本格式（无染色，包含完整资料）</li>
                     <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
+                    <li>点击最后一列的"复制全部资料"按钮可批量复制所有完整资料（自动添加双引号，便于发号）</li>
                     <li>切换到WPS表格，选择要粘贴的单元格，按Ctrl+V粘贴</li>
+                    <li>根据需要配置关键字（点击"关键字配置"展开）</li>
                     <li>如需业务合作，或对工具有任何建议，请添加微信：vpeipeix</li>
                 </ol>
             </div>
@@ -450,18 +509,73 @@
             const copyBtn = document.getElementById('copyBtn');
             const clearBtn = document.getElementById('clearBtn');
             const saveKeywordsBtn = document.getElementById('saveKeywordsBtn');
+            const resetKeywordsBtn = document.getElementById('resetKeywordsBtn');
+            const copyFullDataBtn = document.getElementById('copyFullDataBtn');
             const keywordConfig = document.getElementById('keywordConfig');
+            const resultBody = document.getElementById('resultBody');
             const notification = document.getElementById('notification');
             
-            // 字段元素
-            const orderNote = document.getElementById('orderNote');
-            const orderItem = document.getElementById('orderItem');
-            const characterName = document.getElementById('characterName');
-            const profession = document.getElementById('profession');
-            const equipmentLevelTalent = document.getElementById('equipmentLevelTalent');
-            const gameType = document.getElementById('gameType');
-            const serverRegion = document.getElementById('serverRegion');
-            const serverName = document.getElementById('serverName');
+            // 职业颜色映射
+            const classColors = {
+                "死亡骑士": "#C41F3B",
+                "武僧": "#00FF96",
+                "德鲁伊": "#FF7D0A",
+                "战士": "#C79C6E",
+                "圣骑士": "#F58CBA",
+                "恶魔猎手": "#A330C9",
+                "盗贼": "#FFF569",
+                "猎人": "#ABD473",
+                "法师": "#69CCF0",
+                "术士": "#9482C9",
+                "萨满": "#0070DE",
+                "唤魔师": "#33937F",
+                "牧师": "#FFFFFF"
+            };
+            
+            // 职业别名映射（不区分大小写）
+            const classAliases = {
+                "死亡骑士": ["BDK", "DK", "dk", "DKT", "DK邪恶", "冰DK", "死亡骑士", "邪", "邪DK", "邪恶", "血DK"],
+                "武僧": ["WS", "WST", "酒仙", "奶僧", "踏风"],
+                "德鲁伊": ["熊T", "纯熊T", "熊", "熊T", "鸟德", "奶D", "奶德", "鸟", "鸟德", "小德", "德鲁伊", "猫德", "猫"],
+                "战士": ["防战", "狂暴战", "武器战", "战士", "战士T", "FZ", "kbz"],
+                "圣骑士": ["惩戒骑", "CJQ", "QS", "骑士", "圣骑士", "圣骑士:骑士", "防骑", "FQ", "防骑", "奶骑"],
+                "恶魔猎手": ["DH", "dh", "DH浩劫", "DH双休", "恶魔猎手", "恶魔猎手浩劫", "复仇", "浩劫"],
+                "盗贼": ["DZ", "刺杀", "刺杀贼", "敏锐", "狂徒", "战斗", "奇袭", "浩劫"],
+                "猎人": ["生存猎", "LR", "猎人", "射击猎", "兽王猎", "生存", "射击", "兽王"],
+                "法师": ["FS", "奥法", "冰法", "法师", "法师奥", "法师冰", "火法"],
+                "术士": ["SS", "恶魔术", "毁灭术", "术士", "痛苦术", "恶魔", "毁灭", "痛苦"],
+                "萨满": ["奶萨", "SM", "萨满", "萨满祭司", "元素", "元素萨", "增强", "增强萨"],
+                "唤魔师": ["恩护", "唤魔师", "龙人", "龙希尔", "奶龙", "湮灭", "增辉", "龙奶"],
+                "牧师": ["MS", "暗牧", "戒律牧", "戒牧", "牧师", "牧师双休", "神牧"]
+            };
+            
+            // 默认关键字配置（使用空格分隔）
+            const defaultKeywords = {
+                orderNote: ["（暗号）", "订单备注", "其他备注", "备注"],
+                orderItem: ["代练项目", "项目", "代练内容", "内容", "极速陪玩"],
+                characterName: ["角色名字", "角色名", "角色", "名字", "昵称"],
+                profession: ["职业天赋/装等", "职业/天赋", "职业天赋", "职业", "角色职业"],
+                equipmentLevel: ["装等", "装备等级", "物品等级"],
+                talent: ["天赋/装等", "天赋", "专精", "定位"],
+                serverName: ["服务器名字", "服务器名称", "服务器名", "服务器", "区服"]
+            };
+            
+            // 当前关键字配置
+            let currentKeywords = {...defaultKeywords};
+            
+            // 存储原始资料文本
+            let rawDataGroups = [];
+            
+            // 初始化关键字输入框
+            function initKeywordInputs() {
+                document.getElementById('orderNoteKeywords').value = currentKeywords.orderNote.join(' ');
+                document.getElementById('orderItemKeywords').value = currentKeywords.orderItem.join(' ');
+                document.getElementById('characterNameKeywords').value = currentKeywords.characterName.join(' ');
+                document.getElementById('professionKeywords').value = currentKeywords.profession.join(' ');
+                document.getElementById('equipmentLevelKeywords').value = currentKeywords.equipmentLevel.join(' ');
+                document.getElementById('talentKeywords').value = currentKeywords.talent.join(' ');
+                document.getElementById('serverNameKeywords').value = currentKeywords.serverName.join(' ');
+            }
             
             // 保存关键字配置
             function saveKeywords() {
@@ -480,6 +594,14 @@
                 showNotification('关键字配置已保存！');
             }
             
+            // 恢复默认关键字配置
+            function resetKeywords() {
+                currentKeywords = {...defaultKeywords};
+                initKeywordInputs();
+                localStorage.setItem('wowKeywords', JSON.stringify(currentKeywords));
+                showNotification('已恢复默认关键字配置！');
+            }
+            
             // 从本地存储加载关键字配置
             function loadKeywords() {
                 const savedKeywords = localStorage.getItem('wowKeywords');
@@ -489,7 +611,46 @@
                 initKeywordInputs();
             }
             
-            // 根据关键字提取字段值（使用部分匹配）
+            // 根据职业别名获取标准职业名称
+            function getStandardClassName(className) {
+                if (!className) return "";
+                
+                const lowerClassName = className.toLowerCase();
+                
+                // 检查别名映射
+                for (const [standardClass, aliases] of Object.entries(classAliases)) {
+                    for (const alias of aliases) {
+                        if (lowerClassName.includes(alias.toLowerCase())) {
+                            return standardClass;
+                        }
+                    }
+                    
+                    // 检查是否直接匹配标准职业名称
+                    if (lowerClassName.includes(standardClass.toLowerCase())) {
+                        return standardClass;
+                    }
+                }
+                
+                return className; // 如果没有匹配，返回原始值
+            }
+            
+            // 根据职业获取颜色
+            function getClassColor(className) {
+                if (!className) return "";
+                
+                const standardClass = getStandardClassName(className);
+                
+                // 检查是否匹配职业颜色
+                for (const [cls, color] of Object.entries(classColors)) {
+                    if (standardClass === cls) {
+                        return color;
+                    }
+                }
+                
+                return ""; // 如果没有匹配，返回空字符串
+            }
+            
+            // 根据关键字提取字段值（使用部分匹配，只提取当前行）
             function extractValueByKeywords(text, keywords) {
                 const lines = text.split('\n');
                 
@@ -506,22 +667,11 @@
                             let valuePart = line.substring(keywordIndex + keyword.length);
                             
                             // 处理各种分隔符情况
-                            // 移除可能的分隔符（冒号、空格等）
+                            // 移除可能的分隔符（冒号、空格等），但不包括斜杠
                             valuePart = valuePart.replace(/^[\s:：]+/, '');
                             
-                            // 如果还有内容，返回它
-                            if (valuePart.length > 0) {
-                                return valuePart;
-                            }
-                            
-                            // 如果关键字后面没有内容，尝试从下一行获取值
-                            if (i + 1 < lines.length) {
-                                const nextLine = lines[i + 1].trim();
-                                // 如果下一行不是以关键字开头，则可能是值
-                                if (nextLine.length > 0 && !isKeywordLine(nextLine, currentKeywords)) {
-                                    return nextLine;
-                                }
-                            }
+                            // 只返回当前行的内容，如果为空则返回空字符串
+                            return valuePart;
                         }
                     }
                 }
@@ -529,23 +679,9 @@
                 return "";
             }
             
-            // 检查一行是否包含任何关键字
-            function isKeywordLine(line, allKeywords) {
-                for (const category in allKeywords) {
-                    for (const keyword of allKeywords[category]) {
-                        if (line.includes(keyword)) {
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-            
-            // 解析文本函数
-            function parseText() {
-                const text = inputText.value;
-                
-                const result = {
+            // 解析单组文本函数
+            function parseSingleText(text) {
+                return {
                     订单备注: extractValueByKeywords(text, currentKeywords.orderNote),
                     订单项目: extractValueByKeywords(text, currentKeywords.orderItem),
                     角色名: extractValueByKeywords(text, currentKeywords.characterName),
@@ -554,42 +690,179 @@
                     天赋: extractValueByKeywords(text, currentKeywords.talent),
                     服务器名: extractValueByKeywords(text, currentKeywords.serverName)
                 };
-                
-                // 更新页面显示
-                orderNote.textContent = result.订单备注;
-                orderItem.textContent = result.订单项目;
-                characterName.textContent = result.角色名;
-                profession.textContent = result.职业;
-                equipmentLevelTalent.textContent = `${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}`;
-                serverName.textContent = result.服务器名;
             }
             
-            // 复制结果函数
+            // 解析多组文本函数
+            function parseMultipleTexts() {
+                const text = inputText.value;
+                
+                // 清空结果表格
+                resultBody.innerHTML = '';
+                rawDataGroups = [];
+                
+                // 分割多组资料（使用两个或更多连续换行符作为分隔）
+                const groups = text.split(/\n\s*\n/);
+                
+                // 解析每组资料
+                groups.forEach(group => {
+                    if (group.trim() === '') return; // 跳过空组
+                    
+                    const result = parseSingleText(group);
+                    const classColor = getClassColor(result.职业);
+                    
+                    // 存储原始资料
+                    rawDataGroups.push(group);
+                    
+                    // 创建新行
+                    const row = document.createElement('tr');
+                    
+                    // 添加单元格，为角色名单元格添加颜色
+                    row.innerHTML = `
+                        <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
+                        <td title="${result.订单项目}">${result.订单项目}</td>
+                        <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
+                        <td title="${result.职业}">${result.职业}</td>
+                        <td title="${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}">${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}</td>
+                        <td>魔兽世界</td>
+                        <td>全部</td>
+                        <td title="${result.服务器名}">${result.服务器名}</td>
+                        <td class="full-data" title="${group}">${group}</td>
+                    `;
+                    
+                    // 添加到表格
+                    resultBody.appendChild(row);
+                });
+                
+                if (groups.length === 0 && text.trim() !== '') {
+                    // 如果没有找到组，尝试解析为单组
+                    const result = parseSingleText(text);
+                    const classColor = getClassColor(result.职业);
+                    
+                    // 存储原始资料
+                    rawDataGroups.push(text);
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
+                        <td title="${result.订单项目}">${result.订单项目}</td>
+                        <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
+                        <td title="${result.职业}">${result.职业}</td>
+                        <td title="${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}">${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}</td>
+                        <td>魔兽世界</td>
+                        <td>全部</td>
+                        <td title="${result.服务器名}">${result.服务器名}</td>
+                        <td class="full-data" title="${text}">${text}</td>
+                    `;
+                    resultBody.appendChild(row);
+                }
+            }
+            
+            // 复制结果函数（使用Excel兼容格式）
             function copyResults() {
-                const values = [
-                    orderNote.textContent,
-                    orderItem.textContent,
-                    characterName.textContent,
-                    profession.textContent,
-                    equipmentLevelTalent.textContent,
-                    gameType.textContent,
-                    serverRegion.textContent,
-                    serverName.textContent
-                ];
+                const rows = resultBody.querySelectorAll('tr');
+                if (rows.length === 0) {
+                    showNotification('没有数据可复制！');
+                    return;
+                }
                 
-                // 使用制表符分隔，方便粘贴到表格
-                const textToCopy = values.join('\t');
+                // 获取选中的复制格式
+                const copyFormat = document.querySelector('input[name="copyFormat"]:checked').value;
                 
-                // 创建一个临时的textarea元素来执行复制
-                const textarea = document.createElement('textarea');
-                textarea.value = textToCopy;
-                document.body.appendChild(textarea);
-                textarea.select();
+                if (copyFormat === "plain") {
+                    // 纯文本格式 - 为完整资料添加双引号
+                    let textContent = "";
+                    rows.forEach((row, rowIndex) => {
+                        const cells = row.querySelectorAll('td');
+                        let rowText = "";
+                        
+                        // 处理所有列
+                        for (let i = 0; i < 9; i++) {
+                            if (cells[i]) {
+                                if (i === 8) {
+                                    // 完整资料列使用原始数据，并添加双引号
+                                    const fullData = rawDataGroups[rowIndex] || cells[i].textContent;
+                                    rowText += `"${fullData}"`;
+                                } else {
+                                    rowText += cells[i].textContent + "\t";
+                                }
+                            }
+                        }
+                        
+                        textContent += rowText + "\n";
+                    });
+                    
+                    // 使用Clipboard API复制文本
+                    navigator.clipboard.writeText(textContent).then(() => {
+                        showNotification('纯文本格式复制成功！（已添加双引号）');
+                    }).catch(err => {
+                        console.error('复制失败:', err);
+                        showNotification('复制失败，请手动复制');
+                    });
+                    
+                    return;
+                }
+                
+                // WPS格式（只复制前8列）
+                const tempDiv = document.createElement('div');
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                
+                const excelTable = document.createElement('table');
+                excelTable.style.borderCollapse = 'collapse';
+                excelTable.style.width = '100%';
+                excelTable.style.fontFamily = 'Microsoft YaHei, sans-serif';
+                excelTable.style.textAlign = 'center';
+                excelTable.style.verticalAlign = 'middle';
+                excelTable.style.backgroundColor = 'transparent';
+                
+                // 添加数据行
+                rows.forEach((row) => {
+                    const cells = row.querySelectorAll('td');
+                    const newRow = document.createElement('tr');
+                    
+                    // WPS格式只复制前8列
+                    for (let i = 0; i < 8; i++) {
+                        if (cells[i]) {
+                            const td = document.createElement('td');
+                            
+                            // WPS兼容格式
+                            td.style.color = '#000000';
+                            td.style.border = '1px solid transparent'; // 透明边框
+                            td.style.backgroundColor = 'transparent'; // 透明背景
+                            td.style.padding = '5px 8px';
+                            td.style.textAlign = 'center';
+                            td.style.verticalAlign = 'middle';
+                            td.style.wordWrap = 'break-word';
+                            td.style.fontFamily = 'Microsoft YaHei, sans-serif';
+                            td.style.fontSize = '11pt';
+                            
+                            // 只有角色名列保留背景色
+                            if (i === 2 && cells[i].style.backgroundColor) {
+                                td.style.backgroundColor = cells[i].style.backgroundColor;
+                                td.style.color = '#000000';
+                            }
+                            
+                            td.textContent = cells[i].textContent;
+                            newRow.appendChild(td);
+                        }
+                    }
+                    
+                    excelTable.appendChild(newRow);
+                });
+                
+                tempDiv.appendChild(excelTable);
+                document.body.appendChild(tempDiv);
+                
+                // 选择表格内容
+                const range = document.createRange();
+                range.selectNode(excelTable);
+                window.getSelection().removeAllRanges();
+                window.getSelection().addRange(range);
                 
                 try {
                     const successful = document.execCommand('copy');
                     if (successful) {
-                        showNotification('复制成功！可以粘贴到WPS表格中');
+                        showNotification('WPS格式复制成功！');
                     } else {
                         showNotification('复制失败，请手动复制');
                     }
@@ -598,18 +871,35 @@
                     showNotification('复制失败，请手动复制');
                 }
                 
-                document.body.removeChild(textarea);
+                // 清理
+                window.getSelection().removeAllRanges();
+                document.body.removeChild(tempDiv);
+            }
+            
+            // 复制完整资料函数（添加双引号）
+            function copyFullData() {
+                if (rawDataGroups.length === 0) {
+                    showNotification('没有完整资料可复制！');
+                    return;
+                }
+                
+                // 使用纯文本格式复制完整资料，每个资料用双引号包裹
+                const textContent = rawDataGroups.map(data => `"${data}"`).join('\n');
+                
+                // 使用Clipboard API复制文本
+                navigator.clipboard.writeText(textContent).then(() => {
+                    showNotification('完整资料复制成功！（已添加双引号）');
+                }).catch(err => {
+                    console.error('复制失败:', err);
+                    showNotification('复制失败，请手动复制');
+                });
             }
             
             // 清空函数
             function clearAll() {
                 inputText.value = '';
-                orderNote.textContent = '';
-                orderItem.textContent = '';
-                characterName.textContent = '';
-                profession.textContent = '';
-                equipmentLevelTalent.textContent = '';
-                serverName.textContent = '';
+                resultBody.innerHTML = '';
+                rawDataGroups = [];
             }
             
             // 显示通知
@@ -623,23 +913,20 @@
             }
             
             // 添加事件监听器
-            parseBtn.addEventListener('click', parseText);
+            parseBtn.addEventListener('click', parseMultipleTexts);
             copyBtn.addEventListener('click', copyResults);
             clearBtn.addEventListener('click', clearAll);
             saveKeywordsBtn.addEventListener('click', saveKeywords);
+            resetKeywordsBtn.addEventListener('click', resetKeywords);
+            copyFullDataBtn.addEventListener('click', copyFullData);
             
             // 关键字配置区域折叠/展开
-            keywordConfig.addEventListener('click', function(e) {
-                if (e.target.tagName === 'H3') {
-                    keywordConfig.classList.toggle('collapsed');
-                }
+            keywordConfig.querySelector('h3').addEventListener('click', function() {
+                keywordConfig.classList.toggle('collapsed');
             });
             
             // 初始化
             loadKeywords();
-            
-            // 清空文本框内容
-            inputText.value = "";
         });
     </script>
 </body>
