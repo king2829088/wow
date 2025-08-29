@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔兽世界代练录单工具 - Beta 1.5版</title>
+    <title>魔兽世界代练录单工具 - Beta1.62 同子标识功能版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -381,7 +381,7 @@
 <body>
     <div class="container">
         <header>
-            <h1><span class="wow-logo">⚔️</span>破坏之王魔兽工作室<span class="wow-logo">⚔️</span>录单工具 Beta1.5版</h1>
+            <h1><span class="wow-logo">⚔️</span>魔兽世界代练录单工具 - Beta1.62 同子标识功能版</h1>
         </header>
 
         <div class="content">
@@ -447,9 +447,9 @@
             </div>
 
             <div class="keyword-config collapsed" id="keywordConfig">
-                <h3>关键字配置 (点击展开/折叠)【首次打开网页，请点击恢复默认配置，再点击保存配置】</h3>
+                <h3>关键字配置 (点击展开/折叠)【如提取信息出错，请点击恢复默认配置，再点击保存配置】</h3>
                 <div class="keyword-config-content">
-                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。<br>注意：关键字匹配采用部分匹配方式，只要字段名称中包含关键字就会被识别。</p>
+                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。<br>注意：关键字匹配采用精确匹配方式，只有字段名称完全匹配关键字时才会识别。</p>
                     <table class="keyword-table">
                         <thead>
                             <tr>
@@ -488,11 +488,11 @@
                             </tr>
                             <tr>
                                 <td>战网账号</td>
-                                <td><input type="text" id="accountKeywords" value="战网账号 账号 游戏账号"></td>
+                                <td><input type="text" id="accountKeywords" value="战网账号 战网帐号 账号 帐号 游戏账号 游戏帐号"></td>
                             </tr>
                             <tr>
                                 <td>子账号</td>
-                                <td><input type="text" id="subAccountKeywords" value="子账号 子战网"></td>
+                                <td><input type="text" id="subAccountKeywords" value="子账号 子帐号 子战网"></td>
                             </tr>
                         </tbody>
                     </table>
@@ -507,7 +507,7 @@
                 <h3>使用说明</h3>
                 <ol>
                     <li>将老板资料粘贴到上方文本框中（支持一次粘贴多组资料，用空行分隔）</li>
-                    <li>点击"提取信息"按钮解析内容（可检测同子）</li>
+                    <li>点击"提取信息"按钮解析内容</li>
                     <li>选择复制格式：WPS格式（含职业染色，不含完整资料）或纯文本格式（无染色，包含完整资料）</li>
                     <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
                     <li>点击最后一列的"复制全部资料"按钮可批量复制所有完整资料（自动添加双引号，便于发号）</li>
@@ -552,7 +552,7 @@
                 "术士": "#9482C9",
                 "萨满": "#0070DE",
                 "唤魔师": "#33937F",
-                "牧师": "#FFFFFF"
+                "牧师": "#F0EBE0"  // 修改牧师颜色为#F0EBE0
             };
             
             // 职业别名映射（不区分大小写）
@@ -581,8 +581,8 @@
                 equipmentLevel: ["装等", "装备等级", "物品等级"],
                 talent: ["天赋/装等", "天赋", "专精", "定位"],
                 serverName: ["服务器名字", "服务器名称", "服务器名", "服务器", "区服"],
-                account: ["战网账号", "账号", "游戏账号"],
-                subAccount: ["子账号", "子战网"]
+                account: ["战网账号", "战网帐号", "账号", "帐号", "游戏账号", "游戏帐号"],
+                subAccount: ["子账号", "子帐号", "子战网"]
             };
             
             // 当前关键字配置
@@ -692,27 +692,30 @@
                 return ""; // 如果没有匹配，返回空字符串
             }
             
-            // 根据关键字提取字段值（使用部分匹配，只提取当前行）
+            // 根据关键字提取字段值（使用精确匹配）
             function extractValueByKeywords(text, keywords) {
                 const lines = text.split('\n');
                 
                 for (let i = 0; i < lines.length; i++) {
                     let line = lines[i].trim();
                     
-                    // 检查是否包含任何关键字（部分匹配）
+                    // 检查是否精确匹配任何关键字
                     for (const keyword of keywords) {
-                        if (line.includes(keyword)) {
-                            // 找到关键字位置
-                            const keywordIndex = line.indexOf(keyword);
-                            
+                        // 检查是否以关键字开头（后面跟着分隔符）
+                        if (line.startsWith(keyword + ':') || line.startsWith(keyword + '：')) {
                             // 获取关键字后面的内容
-                            let valuePart = line.substring(keywordIndex + keyword.length);
+                            let valuePart = line.substring(keyword.length + 1).trim();
+                            return valuePart;
+                        }
+                        
+                        // 检查是否包含关键字后跟空格和分隔符
+                        const keywordWithSpace = keyword + ' ';
+                        if (line.includes(keywordWithSpace)) {
+                            const keywordIndex = line.indexOf(keywordWithSpace);
+                            let valuePart = line.substring(keywordIndex + keywordWithSpace.length).trim();
                             
-                            // 处理各种分隔符情况
-                            // 移除可能的分隔符（冒号、空格等），但不包括斜杠
+                            // 移除可能的分隔符（冒号、空格等）
                             valuePart = valuePart.replace(/^[\s:：]+/, '');
-                            
-                            // 只返回当前行的内容，如果为空则返回空字符串
                             return valuePart;
                         }
                     }
@@ -746,13 +749,19 @@
                 
                 // 第一次遍历：收集所有账号组合
                 parsedResults.forEach(result => {
-                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    const account = result.战网账号 ? result.战网账号.trim() : '';
+                    const subAccount = result.子账号 ? result.子账号.trim() : '';
                     
-                    if (!accountCombinationMap[accountKey]) {
-                        accountCombinationMap[accountKey] = [];
+                    // 只有当账号和子账号都有值时才算有效
+                    if (account && subAccount) {
+                        const accountKey = `${account}-${subAccount}`;
+                        
+                        if (!accountCombinationMap[accountKey]) {
+                            accountCombinationMap[accountKey] = [];
+                        }
+                        
+                        accountCombinationMap[accountKey].push(result);
                     }
-                    
-                    accountCombinationMap[accountKey].push(result);
                 });
                 
                 // 第二次遍历：为重复账号生成标识
@@ -760,12 +769,13 @@
                     const accounts = accountCombinationMap[key];
                     
                     // 只有当账号组合有值且不止一个时才算重复
-                    if (accounts.length > 1 && key !== '-') {
+                    if (accounts.length > 1) {
                         const identifier = generateRandomIdentifier();
                         
                         // 为每个重复账号分配相同的标识
                         accounts.forEach(account => {
-                            accountIdentifiers[`${account.战网账号}-${account.子账号}`] = identifier;
+                            const accountKey = `${account.战网账号.trim()}-${account.子账号.trim()}`;
+                            accountIdentifiers[accountKey] = identifier;
                         });
                     }
                 });
@@ -798,18 +808,21 @@
                 // 显示结果
                 parsedResults.forEach((result, index) => {
                     const classColor = getClassColor(result.职业);
-                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    
+                    const account = result.战网账号 ? result.战网账号.trim() : '';
+                    const subAccount = result.子账号 ? result.子账号.trim() : '';
+                    const accountKey = `${account}-${subAccount}`;
                     const accountIdentifier = accountIdentifiers[accountKey] || '';
                     
                     // 创建新行
                     const row = document.createElement('tr');
                     
-                    // 添加单元格，为角色名单元格添加颜色
+                    // 添加单元格，为角色名单元格添加颜色，字体颜色固定为黑色
                     row.innerHTML = `
                         <td class="account-id" title="${accountIdentifier}">${accountIdentifier}</td>
                         <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
                         <td title="${result.订单项目}">${result.订单项目}</td>
-                        <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
+                        <td style="background-color: ${classColor}; color: #000000" title="${result.角色名}">${result.角色名}</td>
                         <td title="${result.职业}">${result.职业}</td>
                         <td title="${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}">${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}</td>
                         <td>魔兽世界</td>
@@ -826,7 +839,9 @@
                     // 如果没有找到组，尝试解析为单组
                     const result = parseSingleText(text);
                     const classColor = getClassColor(result.职业);
-                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    const account = result.战网账号 ? result.战网账号.trim() : '';
+                    const subAccount = result.子账号 ? result.子账号.trim() : '';
+                    const accountKey = `${account}-${subAccount}`;
                     const accountIdentifier = accountIdentifiers[accountKey] || '';
                     
                     // 存储原始资料
@@ -837,7 +852,7 @@
                         <td class="account-id" title="${accountIdentifier}">${accountIdentifier}</td>
                         <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
                         <td title="${result.订单项目}">${result.订单项目}</td>
-                        <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
+                        <td style="background-color: ${classColor}; color: #000000" title="${result.角色名}">${result.角色名}</td>
                         <td title="${result.职业}">${result.职业}</td>
                         <td title="${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}">${result.装等}${result.装等 && result.天赋 ? '/' : ''}${result.天赋}</td>
                         <td>魔兽世界</td>
@@ -873,7 +888,9 @@
                                 if (i === 9) {
                                     // 完整资料列使用原始数据，并添加双引号
                                     const fullData = rawDataGroups[rowIndex] || cells[i].textContent;
-                                    rowText += `"${fullData}"`;
+                                    // 移除现有的双引号，然后添加新的双引号
+                                    const cleanedData = fullData.replace(/"/g, '');
+                                    rowText += `"${cleanedData}"`;
                                 } else {
                                     rowText += cells[i].textContent + "\t";
                                 }
@@ -976,7 +993,8 @@
                 }
                 
                 // 使用纯文本格式复制完整资料，每个资料用双引号包裹
-                const textContent = rawDataGroups.map(data => `"${data}"`).join('\n');
+                // 先移除资料中已有的双引号，然后再用双引号包裹
+                const textContent = rawDataGroups.map(data => `"${data.replace(/"/g, '')}"`).join('\n');
                 
                 // 使用Clipboard API复制文本
                 navigator.clipboard.writeText(textContent).then(() => {
