@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔兽世界代练录单工具 - Bata1.2</title>
+    <title>魔兽世界代练录单工具 - Beta 1.5版</title>
     <style>
         * {
             box-sizing: border-box;
@@ -208,6 +208,10 @@
             color: #a89265;
             font-size: 15px;
         }
+        .instructions li:last-child {
+            font-weight: bold;
+            color: #ffd100;
+        }
         .keyword-config {
             background: rgba(25, 30, 45, 0.8);
             padding: 18px;
@@ -337,6 +341,12 @@
         .copy-full-btn:hover {
             background: linear-gradient(to bottom, #c8b384, #8e805b);
         }
+        .account-id {
+            font-weight: bold;
+            color: #ffd100;
+            background-color: rgba(255, 209, 0, 0.1);
+            padding: 2px 5px;
+        }
         @media (max-width: 992px) {
             .button-group {
                 flex-wrap: wrap;
@@ -371,7 +381,7 @@
 <body>
     <div class="container">
         <header>
-            <h1><span class="wow-logo">⚔️</span>魔兽代练录单工具 Beta1.2</h1>
+            <h1><span class="wow-logo">⚔️</span>破坏之王魔兽工作室<span class="wow-logo">⚔️</span>录单工具 Beta1.5版</h1>
         </header>
 
         <div class="content">
@@ -383,13 +393,17 @@
 天赋:武器
 角色名:战士一号
 装等:480
+账号:account1
+密码:password1
 
 服务器名:死亡之翼
 部落/联盟:部落
 职业:法师
 天赋:冰霜
 角色名:法师一号
-装等:475"></textarea>
+装等:475
+账号:account1
+子账号:sub1"></textarea>
                 
                 <div class="button-group">
                     <button id="parseBtn">提取信息</button>
@@ -400,11 +414,11 @@
                 <div class="copy-options">
                     <div class="copy-option">
                         <input type="radio" id="copyFormat1" name="copyFormat" value="wps" checked>
-                        <label for="copyFormat1">WPS格式（职业染色，不带完整资料）</label>
+                        <label for="copyFormat1">WPS格式（职业染色，不含完整资料）</label>
                     </div>
                     <div class="copy-option">
                         <input type="radio" id="copyFormat3" name="copyFormat" value="plain">
-                        <label for="copyFormat3">纯文本格式（无染色，带完整资料）</label>
+                        <label for="copyFormat3">纯文本格式（无染色，包含完整资料）</label>
                     </div>
                 </div>
             </div>
@@ -414,6 +428,7 @@
                 <table class="result-table">
                     <thead>
                         <tr>
+                            <th>同子标识</th>
                             <th>订单备注</th>
                             <th>订单项目</th>
                             <th>角色名</th>
@@ -471,6 +486,14 @@
                                 <td>服务器名</td>
                                 <td><input type="text" id="serverNameKeywords" value="服务器名字 服务器名称 服务器名 服务器 区服"></td>
                             </tr>
+                            <tr>
+                                <td>战网账号</td>
+                                <td><input type="text" id="accountKeywords" value="战网账号 账号 游戏账号"></td>
+                            </tr>
+                            <tr>
+                                <td>子账号</td>
+                                <td><input type="text" id="subAccountKeywords" value="子账号 子战网"></td>
+                            </tr>
                         </tbody>
                     </table>
                     <div style="margin-top: 12px; display: flex; gap: 12px;">
@@ -484,7 +507,7 @@
                 <h3>使用说明</h3>
                 <ol>
                     <li>将老板资料粘贴到上方文本框中（支持一次粘贴多组资料，用空行分隔）</li>
-                    <li>点击"提取信息"按钮解析内容</li>
+                    <li>点击"提取信息"按钮解析内容（可检测同子）</li>
                     <li>选择复制格式：WPS格式（含职业染色，不含完整资料）或纯文本格式（无染色，包含完整资料）</li>
                     <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
                     <li>点击最后一列的"复制全部资料"按钮可批量复制所有完整资料（自动添加双引号，便于发号）</li>
@@ -557,7 +580,9 @@
                 profession: ["职业天赋/装等", "职业/天赋", "职业天赋", "职业", "角色职业"],
                 equipmentLevel: ["装等", "装备等级", "物品等级"],
                 talent: ["天赋/装等", "天赋", "专精", "定位"],
-                serverName: ["服务器名字", "服务器名称", "服务器名", "服务器", "区服"]
+                serverName: ["服务器名字", "服务器名称", "服务器名", "服务器", "区服"],
+                account: ["战网账号", "账号", "游戏账号"],
+                subAccount: ["子账号", "子战网"]
             };
             
             // 当前关键字配置
@@ -565,6 +590,19 @@
             
             // 存储原始资料文本
             let rawDataGroups = [];
+            
+            // 存储账号标识映射
+            let accountIdentifiers = {};
+            
+            // 生成随机标识符（6位数字和大写字母）
+            function generateRandomIdentifier() {
+                const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                let result = '同子';
+                for (let i = 0; i < 6; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                return result;
+            }
             
             // 初始化关键字输入框
             function initKeywordInputs() {
@@ -575,6 +613,8 @@
                 document.getElementById('equipmentLevelKeywords').value = currentKeywords.equipmentLevel.join(' ');
                 document.getElementById('talentKeywords').value = currentKeywords.talent.join(' ');
                 document.getElementById('serverNameKeywords').value = currentKeywords.serverName.join(' ');
+                document.getElementById('accountKeywords').value = currentKeywords.account.join(' ');
+                document.getElementById('subAccountKeywords').value = currentKeywords.subAccount.join(' ');
             }
             
             // 保存关键字配置
@@ -586,7 +626,9 @@
                     profession: document.getElementById('professionKeywords').value.split(/\s+/).filter(k => k),
                     equipmentLevel: document.getElementById('equipmentLevelKeywords').value.split(/\s+/).filter(k => k),
                     talent: document.getElementById('talentKeywords').value.split(/\s+/).filter(k => k),
-                    serverName: document.getElementById('serverNameKeywords').value.split(/\s+/).filter(k => k)
+                    serverName: document.getElementById('serverNameKeywords').value.split(/\s+/).filter(k => k),
+                    account: document.getElementById('accountKeywords').value.split(/\s+/).filter(k => k),
+                    subAccount: document.getElementById('subAccountKeywords').value.split(/\s+/).filter(k => k)
                 };
                 
                 // 保存到本地存储
@@ -688,8 +730,45 @@
                     职业: extractValueByKeywords(text, currentKeywords.profession),
                     装等: extractValueByKeywords(text, currentKeywords.equipmentLevel),
                     天赋: extractValueByKeywords(text, currentKeywords.talent),
-                    服务器名: extractValueByKeywords(text, currentKeywords.serverName)
+                    服务器名: extractValueByKeywords(text, currentKeywords.serverName),
+                    战网账号: extractValueByKeywords(text, currentKeywords.account),
+                    子账号: extractValueByKeywords(text, currentKeywords.subAccount)
                 };
+            }
+            
+            // 检测重复账号并生成标识
+            function detectDuplicateAccounts(parsedResults) {
+                // 重置账号标识映射
+                accountIdentifiers = {};
+                
+                // 创建账号组合映射
+                const accountCombinationMap = {};
+                
+                // 第一次遍历：收集所有账号组合
+                parsedResults.forEach(result => {
+                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    
+                    if (!accountCombinationMap[accountKey]) {
+                        accountCombinationMap[accountKey] = [];
+                    }
+                    
+                    accountCombinationMap[accountKey].push(result);
+                });
+                
+                // 第二次遍历：为重复账号生成标识
+                Object.keys(accountCombinationMap).forEach(key => {
+                    const accounts = accountCombinationMap[key];
+                    
+                    // 只有当账号组合有值且不止一个时才算重复
+                    if (accounts.length > 1 && key !== '-') {
+                        const identifier = generateRandomIdentifier();
+                        
+                        // 为每个重复账号分配相同的标识
+                        accounts.forEach(account => {
+                            accountIdentifiers[`${account.战网账号}-${account.子账号}`] = identifier;
+                        });
+                    }
+                });
             }
             
             // 解析多组文本函数
@@ -704,20 +783,30 @@
                 const groups = text.split(/\n\s*\n/);
                 
                 // 解析每组资料
+                const parsedResults = [];
                 groups.forEach(group => {
                     if (group.trim() === '') return; // 跳过空组
                     
                     const result = parseSingleText(group);
-                    const classColor = getClassColor(result.职业);
-                    
-                    // 存储原始资料
+                    parsedResults.push(result);
                     rawDataGroups.push(group);
+                });
+                
+                // 检测重复账号
+                detectDuplicateAccounts(parsedResults);
+                
+                // 显示结果
+                parsedResults.forEach((result, index) => {
+                    const classColor = getClassColor(result.职业);
+                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    const accountIdentifier = accountIdentifiers[accountKey] || '';
                     
                     // 创建新行
                     const row = document.createElement('tr');
                     
                     // 添加单元格，为角色名单元格添加颜色
                     row.innerHTML = `
+                        <td class="account-id" title="${accountIdentifier}">${accountIdentifier}</td>
                         <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
                         <td title="${result.订单项目}">${result.订单项目}</td>
                         <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
@@ -726,7 +815,7 @@
                         <td>魔兽世界</td>
                         <td>全部</td>
                         <td title="${result.服务器名}">${result.服务器名}</td>
-                        <td class="full-data" title="${group}">${group}</td>
+                        <td class="full-data" title="${rawDataGroups[index]}">${rawDataGroups[index]}</td>
                     `;
                     
                     // 添加到表格
@@ -737,12 +826,15 @@
                     // 如果没有找到组，尝试解析为单组
                     const result = parseSingleText(text);
                     const classColor = getClassColor(result.职业);
+                    const accountKey = `${result.战网账号 || ''}-${result.子账号 || ''}`;
+                    const accountIdentifier = accountIdentifiers[accountKey] || '';
                     
                     // 存储原始资料
                     rawDataGroups.push(text);
                     
                     const row = document.createElement('tr');
                     row.innerHTML = `
+                        <td class="account-id" title="${accountIdentifier}">${accountIdentifier}</td>
                         <td class="order-note" title="${result.订单备注}">${result.订单备注}</td>
                         <td title="${result.订单项目}">${result.订单项目}</td>
                         <td style="background-color: ${classColor}; color: ${classColor ? '#FFF' : '#c8b384'}" title="${result.角色名}">${result.角色名}</td>
@@ -776,9 +868,9 @@
                         let rowText = "";
                         
                         // 处理所有列
-                        for (let i = 0; i < 9; i++) {
+                        for (let i = 0; i < 10; i++) {
                             if (cells[i]) {
-                                if (i === 8) {
+                                if (i === 9) {
                                     // 完整资料列使用原始数据，并添加双引号
                                     const fullData = rawDataGroups[rowIndex] || cells[i].textContent;
                                     rowText += `"${fullData}"`;
@@ -802,7 +894,7 @@
                     return;
                 }
                 
-                // WPS格式（只复制前8列）
+                // WPS格式（只复制前9列）
                 const tempDiv = document.createElement('div');
                 tempDiv.style.position = 'absolute';
                 tempDiv.style.left = '-9999px';
@@ -820,8 +912,8 @@
                     const cells = row.querySelectorAll('td');
                     const newRow = document.createElement('tr');
                     
-                    // WPS格式只复制前8列
-                    for (let i = 0; i < 8; i++) {
+                    // WPS格式只复制前9列（跳过完整资料列）
+                    for (let i = 0; i < 9; i++) {
                         if (cells[i]) {
                             const td = document.createElement('td');
                             
@@ -837,7 +929,7 @@
                             td.style.fontSize = '11pt';
                             
                             // 只有角色名列保留背景色
-                            if (i === 2 && cells[i].style.backgroundColor) {
+                            if (i === 3 && cells[i].style.backgroundColor) {
                                 td.style.backgroundColor = cells[i].style.backgroundColor;
                                 td.style.color = '#000000';
                             }
@@ -900,6 +992,7 @@
                 inputText.value = '';
                 resultBody.innerHTML = '';
                 rawDataGroups = [];
+                accountIdentifiers = {};
             }
             
             // 显示通知
