@@ -1674,9 +1674,6 @@
     <div class="note">
         注：红色字样为特效物品，绿色字样为主动饰品，BOSS掉落列表最后深色部分为稀有掉落(M723 H710 PT704)，配方幻化掉落未列出
     </div>
-
-    <!-- 引入damijing.com的tooltips脚本 -->
-    <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
 </body>
 
     <!-- 代练工具脚本 -->
@@ -2276,6 +2273,13 @@
     </script>
 
     <!-- 团本掉落工具脚本 -->
-    <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
+ <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
+        <script>
+            $(function () {
+                //初始化提示工具，如果页面上有异步DOM添加或者刷新，需要再次调用 _wowDamijingOpenApi.domInit();方法进行更新DOM事件注册。
+                _wowDamijingOpenApi = new wowDamijingOpenApi();//实例化提示对象，全局只需要执行一次即可。
+                _wowDamijingOpenApi.domInit();
+            })
+        </script>
 </body>
 </html>
