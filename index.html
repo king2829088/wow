@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>魔兽世界代练录单工具 - Beta1.62 同子标识功能版</title>
+    <title>魔兽世界工具集 - 代练录单与团本掉落查询</title>
     <style>
+        /* 全局样式 */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Microsoft YaHei', 'Arial', sans-serif;
         }
         body {
-            padding: 10px;
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
             background-color: #0a0c12;
             color: #c8b384;
             line-height: 1.6;
@@ -22,15 +22,71 @@
             background-attachment: fixed;
             background-position: center top;
         }
-        .container {
-            max-width: 1600px;
+        .main-container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* 导航样式 */
+        .header-nav {
             margin: 200px auto 20px;
+            background: rgba(16, 18, 26, 0.95);
+            padding: 15px 30px;
+            border: 1px solid #3d4b6a;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+        .app-title {
+            color: #ffd100;
+            font-size: 28px;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 209, 0, 0.5);
+        }
+        .tab-navigation {
+            display: flex;
+            gap: 10px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            background: linear-gradient(to bottom, #5e728f, #3d4b6a);
+            color: #fff;
+            border: 1px solid #7a8ca9;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover {
+            background: linear-gradient(to bottom, #6e84a3, #4a5b7e);
+        }
+        .tab-btn.active {
+            background: linear-gradient(to bottom, #a89265, #7a6c4f);
+            border-color: #c8b384;
+        }
+        
+        /* 内容区域样式 */
+        .content-section {
+            display: none;
             background: rgba(16, 18, 26, 0.9);
-            overflow: hidden;
             border: 1px solid #3d4b6a;
             backdrop-filter: blur(5px);
         }
-        header {
+        .content-section.active {
+            display: block;
+        }
+        
+        /* 代练工具样式 - 保持原有样式 */
+        .dl-container {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: transparent;
+            overflow: hidden;
+        }
+        .dl-header {
             background: transparent;
             color: #ffd100;
             padding: 20px 30px 10px;
@@ -38,7 +94,7 @@
             position: relative;
             overflow: hidden;
         }
-        h1 {
+        .dl-header h1 {
             margin-bottom: 5px;
             font-size: 32px;
             font-weight: bold;
@@ -46,9 +102,47 @@
             position: relative;
             letter-spacing: 2px;
         }
-        .content {
+        .dl-content {
             padding: 20px 30px 30px;
         }
+        /* 其余代练工具样式保持不变... */
+        
+        /* 团本掉落工具样式 - 保持原有样式 */
+        .loot-container {
+            padding: 20px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        .loot-container h1 {
+            color: #ffcc00;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        /* 其余团本掉落工具样式保持不变... */
+        
+        /* 响应式设计 */
+        @media (max-width: 992px) {
+            .header-nav {
+                flex-direction: column;
+                gap: 15px;
+            }
+            .tab-navigation {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+        }
+        @media (max-width: 768px) {
+            .tab-btn {
+                padding: 8px 15px;
+                font-size: 14px;
+            }
+            .app-title {
+                font-size: 22px;
+            }
+        }
+    </style>
+    <!-- 代练工具样式 -->
+    <style>
         .input-section {
             margin-bottom: 25px;
         }
@@ -347,6 +441,28 @@
             background-color: rgba(255, 209, 0, 0.1);
             padding: 2px 5px;
         }
+        .history-section {
+            background: rgba(25, 30, 45, 0.8);
+            padding: 18px;
+            margin-top: 25px;
+            border: 1px solid #5e728f;
+            border-radius: 0;
+        }
+        .history-list {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: rgba(35, 42, 62, 0.6);
+            border: 1px solid #5e728f;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .history-item:hover {
+            background: rgba(41, 50, 75, 0.8);
+        }
         @media (max-width: 992px) {
             .button-group {
                 flex-wrap: wrap;
@@ -365,11 +481,8 @@
             .result-table th, .result-table td {
                 padding: 10px 12px;
             }
-            h1 {
+            .dl-header h1 {
                 font-size: 26px;
-            }
-            .container {
-                margin-top: 180px;
             }
             .copy-full-btn {
                 font-size: 12px;
@@ -377,16 +490,124 @@
             }
         }
     </style>
+    <!-- 团本掉落工具样式 -->
+    <style>
+        .boss-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        .boss-table {
+            flex: 1;
+            min-width: 300px;
+            background-color: #2d2d2d;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-collapse: collapse;
+        }
+        .boss-header {
+            background-color: #4a2d73;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .loot-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .loot-table th, .loot-table td {
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        .loot-table th {
+            background-color: #3a3a3a;
+            color: #ffcc00;
+        }
+        .loot-table tr:nth-child(even) {
+            background-color: #363636;
+        }
+        .loot-table tr:hover {
+            background-color: #444;
+            transition: background-color 0.3s ease;
+        }
+        .item-image-link {
+            display: block;
+            width: 40px;
+            height: 40px;
+        }
+        .item-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+        }
+        .item-type {
+            color: #a0a0ff;
+            white-space: nowrap;
+        }
+        .item-name {
+            color: #ffd700;
+        }
+        .item-stats {
+            color: #ff7de3;
+        }
+        .tier-set {
+            color: #00ff9d;
+        }
+        .special-item {
+            color: #ff6666;
+        }
+        .note {
+            font-style: italic;
+            color: #aaa;
+            margin-top: 30px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .item-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        .item-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 1200px) {
+            .boss-table {
+                min-width: 45%;
+            }
+        }
+        @media (max-width: 768px) {
+            .boss-table {
+                min-width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1><span class="wow-logo">⚔️</span>魔兽世界代练录单工具 - Beta1.62 同子标识功能版</h1>
-        </header>
+    <div class="main-container">
+        <!-- 导航栏 -->
+        <div class="header-nav">
+            <div class="app-title">⚔️ 魔兽世界工具集</div>
+            <div class="tab-navigation">
+                <button class="tab-btn active" data-tab="dl-tool">代练录单工具</button>
+                <button class="tab-btn" data-tab="loot-tool">团本掉落查询</button>
+            </div>
+        </div>
 
-        <div class="content">
-            <div class="input-section">
-                <textarea id="inputText" placeholder="请将老板资料粘贴到这里，可以一次粘贴多组资料，用空行分隔。例如：
+        <!-- 代练录单工具 -->
+        <div id="dl-tool" class="content-section active">
+            <div class="dl-container">
+                <div class="dl-header">
+                    <h1><span class="wow-logo">⚔️</span>魔兽世界代练录单工具 - Beta1.62 同子标识功能版</h1>
+                </div>
+
+                <div class="dl-content">
+                    <div class="input-section">
+                        <textarea id="inputText" placeholder="请将老板资料粘贴到这里，可以一次粘贴多组资料，用空行分隔。例如：
 服务器名:金色平原
 部落/联盟:联盟
 职业:战士
@@ -404,129 +625,1086 @@
 装等:475
 账号:account1
 子账号:sub1"></textarea>
-                
-                <div class="button-group">
-                    <button id="parseBtn">提取信息</button>
-                    <button id="copyBtn" class="copy">复制结果</button>
-                    <button id="clearBtn" class="clear">清空</button>
-                </div>
-                
-                <div class="copy-options">
-                    <div class="copy-option">
-                        <input type="radio" id="copyFormat1" name="copyFormat" value="wps" checked>
-                        <label for="copyFormat1">WPS格式（职业染色，不含完整资料）</label>
+                        
+                        <div class="button-group">
+                            <button id="parseBtn">提取信息</button>
+                            <button id="copyBtn" class="copy">复制结果</button>
+                            <button id="clearBtn" class="clear">清空</button>
+                        </div>
+                        
+                        <div class="copy-options">
+                            <div class="copy-option">
+                                <input type="radio" id="copyFormat1" name="copyFormat" value="wps" checked>
+                                <label for="copyFormat1">WPS格式（职业染色，不含完整资料）</label>
+                            </div>
+                            <div class="copy-option">
+                                <input type="radio" id="copyFormat3" name="copyFormat" value="plain">
+                                <label for="copyFormat3">纯文本格式（无染色，包含完整资料）</label>
+                            </div>
+                        </div>
                     </div>
-                    <div class="copy-option">
-                        <input type="radio" id="copyFormat3" name="copyFormat" value="plain">
-                        <label for="copyFormat3">纯文本格式（无染色，包含完整资料）</label>
+
+                    <div class="result-section">
+                        <h2>提取结果（横向布局）</h2>
+                        <table class="result-table">
+                            <thead>
+                                <tr>
+                                    <th>同子标识</th>
+                                    <th>订单备注</th>
+                                    <th>订单项目</th>
+                                    <th>角色名</th>
+                                    <th>职业</th>
+                                    <th>装等/天赋</th>
+                                    <th>游戏</th>
+                                    <th>服务器区域</th>
+                                    <th>服务器名</th>
+                                    <th><button class="copy-full-btn" id="copyFullDataBtn">复制全部资料</button></th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultBody">
+                                <!-- 结果将动态添加到这里 -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="history-section">
+                        <h3>历史记录 <span id="clearHistoryBtn" style="font-size: 12px; cursor: pointer; color: #a04a4a; margin-left: 10px;">[清空]</span></h3>
+                        <div id="historyList" class="history-list">
+                            <!-- 历史记录将动态添加到这里 -->
+                        </div>
+                    </div>
+
+                    <div class="keyword-config collapsed" id="keywordConfig">
+                        <h3>关键字配置 (点击展开/折叠)【如提取信息出错，请点击恢复默认配置，再点击保存配置】</h3>
+                        <div class="keyword-config-content">
+                            <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。<br>注意：关键字匹配采用精确匹配方式，只有字段名称完全匹配关键字时才会识别。</p>
+                            <table class="keyword-table">
+                                <thead>
+                                    <tr>
+                                        <th>字段名</th>
+                                        <th>识别关键字（用空格分隔）</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>订单备注</td>
+                                        <td><input type="text" id="orderNoteKeywords" value="（暗号） 订单备注 其他备注 备注"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>订单项目</td>
+                                        <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容 代练/陪玩"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>角色名</td>
+                                        <td><input type="text" id="characterNameKeywords" value="角色名字 角色名 角色 名字 昵称"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>职业</td>
+                                        <td><input type="text" id="professionKeywords" value="职业天赋/装等 职业/天赋 职业天赋 职业 角色职业"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>装等</td>
+                                        <td><input type="text" id="equipmentLevelKeywords" value="装等 装备等级 物品等级"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>天赋</td>
+                                        <td><input type="text" id="talentKeywords" value="天赋/装等 天赋 专精 定位"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>服务器名</td>
+                                        <td><input type="text" id="serverNameKeywords" value="服务器名字 服务器名称 服务器名 服务器 区服"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>战网账号</td>
+                                        <td><input type="text" id="accountKeywords" value="战网账号 战网帐号 账号 帐号 游戏账号 游戏帐号"></td>
+                                    </tr>
+                                    <tr>
+                                        <td>子账号</td>
+                                        <td><input type="text" id="subAccountKeywords" value="子账号 子帐号 子战网"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <div style="margin-top: 12px; display: flex; gap: 12px;">
+                                <button id="saveKeywordsBtn" style="padding: 8px 15px; flex: 1;">保存关键字配置</button>
+                                <button id="resetKeywordsBtn" style="padding: 8px 15px; flex: 1; background: linear-gradient(to bottom, #8c3b3b, #5e2828);">恢复默认配置</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="instructions">
+                        <h3>使用说明</h3>
+                        <ol>
+                            <li>将老板资料粘贴到上方文本框中（支持一次粘贴多组资料，用空行分隔）</li>
+                            <li>点击"提取信息"按钮解析内容</li>
+                            <li>选择复制格式：WPS格式（含职业染色，不含完整资料）或纯文本格式（无染色，包含完整资料）</li>
+                            <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
+                            <li>点击最后一列的"复制全部资料"按钮可批量复制所有完整资料（自动添加双引号，便于发号）</li>
+                            <li>切换到WPS表格，选择要粘贴的单元格，按Ctrl+V粘贴</li>
+                            <li>根据需要配置关键字（点击"关键字配置"展开）</li>
+                            <li>如需业务合作，或对工具有任何建议，请添加微信：vpeipeix</li>
+                        </ol>
                     </div>
                 </div>
-            </div>
 
-            <div class="result-section">
-                <h2>提取结果（横向布局）</h2>
-                <table class="result-table">
-                    <thead>
-                        <tr>
-                            <th>同子标识</th>
-                            <th>订单备注</th>
-                            <th>订单项目</th>
-                            <th>角色名</th>
-                            <th>职业</th>
-                            <th>装等/天赋</th>
-                            <th>游戏</th>
-                            <th>服务器区域</th>
-                            <th>服务器名</th>
-                            <th><button class="copy-full-btn" id="copyFullDataBtn">复制全部资料</button></th>
-                        </tr>
-                    </thead>
-                    <tbody id="resultBody">
-                        <!-- 结果将动态添加到这里 -->
-                    </tbody>
-                </table>
-            </div>
-
-            <div class="keyword-config collapsed" id="keywordConfig">
-                <h3>关键字配置 (点击展开/折叠)【如提取信息出错，请点击恢复默认配置，再点击保存配置】</h3>
-                <div class="keyword-config-content">
-                    <p style="color: #a89265; margin-bottom: 12px;">您可以根据不同的资料来源添加或修改关键字。系统会按顺序尝试匹配这些关键字（使用空格分隔）。<br>注意：关键字匹配采用精确匹配方式，只有字段名称完全匹配关键字时才会识别。</p>
-                    <table class="keyword-table">
-                        <thead>
-                            <tr>
-                                <th>字段名</th>
-                                <th>识别关键字（用空格分隔）</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>订单备注</td>
-                                <td><input type="text" id="orderNoteKeywords" value="（暗号） 订单备注 其他备注 备注"></td>
-                            </tr>
-                            <tr>
-                                <td>订单项目</td>
-                                <td><input type="text" id="orderItemKeywords" value="代练项目 项目 代练内容 内容 代练/陪玩"></td>
-                            </tr>
-                            <tr>
-                                <td>角色名</td>
-                                <td><input type="text" id="characterNameKeywords" value="角色名字 角色名 角色 名字 昵称"></td>
-                            </tr>
-                            <tr>
-                                <td>职业</td>
-                                <td><input type="text" id="professionKeywords" value="职业天赋/装等 职业/天赋 职业天赋 职业 角色职业"></td>
-                            </tr>
-                            <tr>
-                                <td>装等</td>
-                                <td><input type="text" id="equipmentLevelKeywords" value="装等 装备等级 物品等级"></td>
-                            </tr>
-                            <tr>
-                                <td>天赋</td>
-                                <td><input type="text" id="talentKeywords" value="天赋/装等 天赋 专精 定位"></td>
-                            </tr>
-                            <tr>
-                                <td>服务器名</td>
-                                <td><input type="text" id="serverNameKeywords" value="服务器名字 服务器名称 服务器名 服务器 区服"></td>
-                            </tr>
-                            <tr>
-                                <td>战网账号</td>
-                                <td><input type="text" id="accountKeywords" value="战网账号 战网帐号 账号 帐号 游戏账号 游戏帐号"></td>
-                            </tr>
-                            <tr>
-                                <td>子账号</td>
-                                <td><input type="text" id="subAccountKeywords" value="子账号 子帐号 子战网"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                    <div style="margin-top: 12px; display: flex; gap: 12px;">
-                        <button id="saveKeywordsBtn" style="padding: 8px 15px; flex: 1;">保存关键字配置</button>
-                        <button id="resetKeywordsBtn" style="padding: 8px 15px; flex: 1; background: linear-gradient(to bottom, #8c3b3b, #5e2828);">恢复默认配置</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="instructions">
-                <h3>使用说明</h3>
-                <ol>
-                    <li>将老板资料粘贴到上方文本框中（支持一次粘贴多组资料，用空行分隔）</li>
-                    <li>点击"提取信息"按钮解析内容</li>
-                    <li>选择复制格式：WPS格式（含职业染色，不含完整资料）或纯文本格式（无染色，包含完整资料）</li>
-                    <li>点击"复制结果"按钮将提取的数据复制到剪贴板</li>
-                    <li>点击最后一列的"复制全部资料"按钮可批量复制所有完整资料（自动添加双引号，便于发号）</li>
-                    <li>切换到WPS表格，选择要粘贴的单元格，按Ctrl+V粘贴</li>
-                    <li>根据需要配置关键字（点击"关键字配置"展开）</li>
-                    <li>如需业务合作，或对工具有任何建议，请添加微信：vpeipeix</li>
-                </ol>
+                <footer>
+                    <p>© 2025 破坏之王魔兽世界工作室</p>
+                </footer>
             </div>
         </div>
 
-        <footer>
-            <p>© 2025 破坏之王魔兽世界工作室</p>
-        </footer>
-    </div>
-
     <div class="notification" id="notification">复制成功！可以粘贴到WPS表格中</div>
 
+        <!-- 团本掉落查询工具 -->
+        <div id="loot-tool" class="content-section">
+            <div class="loot-container">
+                <h1>法力熔炉：欧米伽 - 团本掉落</h1>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>法力熔炉：欧米伽 - 团本掉落</title>
+    <style>
+        body {
+            font-family: Arial, "Microsoft YaHei", sans-serif;
+            margin: 20px;
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+        }
+        h1 {
+            color: #ffcc00;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .boss-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+        .boss-table {
+            flex: 1;
+            min-width: 300px;
+            background-color: #2d2d2d;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            border-collapse: collapse;
+        }
+        .boss-header {
+            background-color: #4a2d73;
+            color: white;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #555;
+            padding: 8px;
+            text-align: left;
+            font-size: 14px;
+        }
+        th {
+            background-color: #3a3a3a;
+            color: #ffcc00;
+        }
+        tr:nth-child(even) {
+            background-color: #363636;
+        }
+        tr:hover {
+            background-color: #444;
+            transition: background-color 0.3s ease;
+        }
+        .item-image {
+            width: 40px;
+            height: 40px;
+            background-color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+            font-size: 10px;
+            text-align: center;
+        }
+        .item-image-link {
+            display: block;
+            width: 40px;
+            height: 40px;
+        }
+        .item-type {
+            color: #a0a0ff;
+            white-space: nowrap;
+        }
+        .item-name {
+            color: #ffd700;
+        }
+        .item-stats {
+            color: #ff7de3;
+        }
+        .tier-set {
+            color: #00ff9d;
+        }
+        .special-item {
+            color: #ff6666;
+        }
+        .note {
+            font-style: italic;
+            color: #aaa;
+            margin-top: 30px;
+            font-size: 0.9em;
+            text-align: center;
+        }
+        .item-link {
+            text-decoration: none;
+            color: inherit;
+        }
+        .item-link:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 1200px) {
+            .boss-table {
+                min-width: 45%;
+            }
+        }
+        @media (max-width: 768px) {
+            .boss-table {
+                min-width: 100%;
+            }
+        }
+        .item-img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 第一行：1-4号BOSS -->
+    <div class="boss-row">
+        <!-- 1号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">1号BOSS: 集能哨兵</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237739" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_polearm_2h_etherealraid_d_01.jpg" class="item-img" alt="湮灭光束长刀"></a></td>
+                    <td><a href="https://www.damijing.com/item/237739" target="_blank" class="item-link item-name">湮灭光束长刀</a></td>
+                    <td class="item-type">长柄-敏捷</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237813" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_mace_1h_etherealraid_d_02.jpg" class="item-img" alt="出厂款集能锤"></a></td>
+                    <td><a href="https://www.damijing.com/item/237813" target="_blank" class="item-link item-name">出厂款集能锤</a></td>
+                    <td class="item-type">单手锤-力量</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237736" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_mace_1h_etherealraid_d_01.jpg" class="item-img" alt="超频集能锤"></a></td>
+                    <td><a href="https://www.damijing.com/item/237736" target="_blank" class="item-link item-name">超频集能锤</a></td>
+                    <td class="item-type">单手锤-智力</td>
+                    <td class="item-stats">爆击>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237567" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_ring03_etherealtechnomancerstyle_gold.jpg" class="item-img" alt="逻辑门：阿尔法"></a></td>
+                    <td><a href="https://www.damijing.com/item/237567" target="_blank" class="item-link item-name">逻辑门：阿尔法</a></td>
+                    <td class="item-type">手指</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242394" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_obliterationcannon.jpg" class="item-img" alt="根除奥能核心"></a></td>
+                    <td><a href="https://www.damijing.com/item/242394" target="_blank" class="item-link item-name">根除奥能核心</a></td>
+                    <td class="item-type">饰品-力量</td>
+                    <td class="item-stats">输出专精</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237547" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_shoulder_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="固定式法力火炮"></a></td>
+                    <td><a href="https://www.damijing.com/item/237547" target="_blank" class="item-link item-name">固定式法力火炮</a></td>
+                    <td class="item-type">布甲-肩部</td>
+                    <td class="item-stats">急速>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237534" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_cloth_raidmageethereal_d_01.jpg" class="item-img" alt="焦灼的筛网束口"></a></td>
+                    <td><a href="https://www.damijing.com/item/237534" target="_blank" class="item-link item-name">焦灼的筛网束口</a></td>
+                    <td class="item-type">布甲-腕部</td>
+                    <td class="item-stats">爆击>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237525" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_helm_leather_raidmonkethereal_d_01.jpg" class="item-img" alt="辐射杂质过滤器"></a></td>
+                    <td><a href="https://www.damijing.com/item/237525" target="_blank" class="item-link item-name">辐射杂质过滤器</a></td>
+                    <td class="item-type">皮甲-头部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237533" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_leather_raidmonkethereal_d_01.jpg" class="item-img" alt="原子相位腰带"></a></td>
+                    <td><a href="https://www.damijing.com/item/237533" target="_blank" class="item-link item-name">原子相位腰带</a></td>
+                    <td class="item-type">皮甲-腰部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237543" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_pant_mail_raidhunterethereal_d_01.jpg" class="item-img" alt="大厅筛网裙甲"></a></td>
+                    <td><a href="https://www.damijing.com/item/237543" target="_blank" class="item-link item-name">大厅筛网裙甲</a></td>
+                    <td class="item-type">锁甲-腿部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237523" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_mail_raidevokerethereal_d_01.jpg" class="item-img" alt="奥法技师的腕部矩阵"></a></td>
+                    <td><a href="https://www.damijing.com/item/237523" target="_blank" class="item-link item-name">奥法技师的腕部矩阵</a></td>
+                    <td class="item-type">锁甲-腕部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237528" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_chest_plate_raidwarriorethereal_d_01.jpg" class="item-img" alt="法力熔铸的位移机架"></a></td>
+                    <td><a href="https://www.damijing.com/item/237528" target="_blank" class="item-link item-name">法力熔铸的位移机架</a></td>
+                    <td class="item-type">板甲-胸部</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237551" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_plate_raiddeathknightethereal_d_01.jpg" class="item-img" alt="灭活驱逐长靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/237551" target="_blank" class="item-link item-name">灭活驱逐长靴</a></td>
+                    <td class="item-type">板甲-脚部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 2号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">2号BOSS: 缚魂者娜欣达利</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237730" target="_blank" class="item-image-link"><img src="https://render.worldofwarcraft.com/us/icons/56/inv_staff_2h_etherealraid_d_02.jpg" class="item-img" alt="虚空琉璃塔杖"></a></td>
+                    <td><a href="https://www.damijing.com/item/237730" target="_blank" class="item-link item-name">虚空琉璃塔杖</a></td>
+                    <td class="item-type">法杖-智力</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237738" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_hand_1h_etherealraid_d_01.jpg" class="item-img" alt="无拘训练利爪"></a></td>
+                    <td><a href="https://www.damijing.com/item/237738" target="_blank" class="item-link item-name">无拘训练利爪</a></td>
+                    <td class="item-type">拳套-敏捷</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237568" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_necklace01_etherealnontechnologicalstyle_gold.jpg" class="item-img" alt="碎裂残魂的灵茧"></a></td>
+                    <td><a href="https://www.damijing.com/item/237568" target="_blank" class="item-link item-name">碎裂残魂的灵茧</a></td>
+                    <td class="item-type">颈部</td>
+                    <td class="item-stats">全能>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242398" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_soulbinderbossinttrinket.jpg" class="item-img" alt="娜欣达利的秘法之鞭"></a></td>
+                    <td><a href="https://www.damijing.com/item/242398" target="_blank" class="item-link item-name">娜欣达利的秘法之鞭</a></td>
+                    <td class="item-type">饰品-智力</td>
+                    <td class="item-stats">输出</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242391" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_manaforge_tanktrinket1.jpg" class="item-img" alt="缚魂者的拥抱"></a></td>
+                    <td><a href="https://www.damijing.com/item/242391" target="_blank" class="item-link item-name">缚魂者的拥抱</a></td>
+                    <td class="item-type">饰品-力敏</td>
+                    <td class="item-stats">坦克</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237588" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebattery_gold.jpg" class="item-img" alt="天顶缚形材料"></a></td>
+                    <td><a href="https://www.damijing.com/item/237588" target="_blank" class="item-link item-name">天顶缚形材料</a></td>
+                    <td class="item-type tier-set">套装手</td>
+                    <td class="item-stats">战贼僧龙</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237587" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebattery_dark.jpg" class="item-img" alt="崇圣缚形材料"></a></td>
+                    <td><a href="https://www.damijing.com/item/237587" target="_blank" class="item-link item-name">崇圣缚形材料</a></td>
+                    <td class="item-type tier-set">套装手</td>
+                    <td class="item-stats">骑牧萨</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237585" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebattery_terra.jpg" class="item-img" alt="恐惧缚形材料"></a></td>
+                    <td><a href="https://www.damijing.com/item/237585" target="_blank" class="item-link item-name">恐惧缚形材料</a></td>
+                    <td class="item-type tier-set">套装手</td>
+                    <td class="item-stats">死瞎术</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237586" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebattery_purple.jpg" class="item-img" alt="秘术缚形材料"></a></td>
+                    <td><a href="https://www.damijing.com/item/237586" target="_blank" class="item-link item-name">秘术缚形材料</a></td>
+                    <td class="item-type tier-set">套装手</td>
+                    <td class="item-stats">法猎德</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237527" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_robe_cloth_raidwarlockethereal_d_01.jpg" class="item-img" alt="灵魂归复罩袍"></a></td>
+                    <td><a href="https://www.damijing.com/item/237527" target="_blank" class="item-link item-name">灵魂归复罩袍</a></td>
+                    <td class="item-type">布甲-胸部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237546" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_leather_raiddruidethereal_d_01.jpg" class="item-img" alt="失落精华裹腕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237546" target="_blank" class="item-link item-name">失落精华裹腕</a></td>
+                    <td class="item-type">皮甲-腕部</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237539" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_mail_raidevokerethereal_d_01.jpg" class="item-img" alt="夺命纺锤爪靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/237539" target="_blank" class="item-link item-name">夺命纺锤爪靴</a></td>
+                    <td class="item-type">锁甲-脚部</td>
+                    <td class="item-stats">爆击>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237550" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_plate_raidwarriorethereal_d_01.jpg" class="item-img" alt="新生虚灵束缚带"></a></td>
+                    <td><a href="https://www.damijing.com/item/237550" target="_blank" class="item-link item-name">新生虚灵束缚带</a></td>
+                    <td class="item-type">板甲-腰部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 3号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">3号BOSS: 卢米萨尔</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237732" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bow_1h_etherealraid_d_01.jpg" class="item-img" alt="贯体束丝弓"></a></td>
+                    <td><a href="https://www.damijing.com/item/237732" target="_blank" class="item-link item-name">贯体束丝弓</a></td>
+                    <td class="item-type">弓</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237729" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_knife_1h_etherealraid_d_01.jpg" class="item-img" alt="惊异基因剪切刀"></a></td>
+                    <td><a href="https://www.damijing.com/item/237729" target="_blank" class="item-link item-name">惊异基因剪切刀</a></td>
+                    <td class="item-type">匕首-敏捷</td>
+                    <td class="item-stats">精通>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237723" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_shield_1h_etherealraid_d_01.jpg" class="item-img" alt="织丝兽的结界"></a></td>
+                    <td><a href="https://www.damijing.com/item/237723" target="_blank" class="item-link item-name">织丝兽的结界</a></td>
+                    <td class="item-type">盾牌</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242393" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_astralspinneret.jpg" class="item-img" alt="卢米萨尔的活体流丝"></a></td>
+                    <td><a href="https://www.damijing.com/item/242393" target="_blank" class="item-link item-name">卢米萨尔的活体流丝</a></td>
+                    <td class="item-type">饰品-急速</td>
+                    <td class="item-stats">治疗</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242395" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_silkwormsantenna.jpg" class="item-img" alt="星界触须"></a></td>
+                    <td><a href="https://www.damijing.com/item/242395" target="_blank" class="item-link item-name">星界触须</a></td>
+                    <td class="item-type">饰品-通用</td>
+                    <td class="item-stats">全职业</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237596" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebarrel_gold.jpg" class="item-img" alt="天顶流丝供品"></a></td>
+                    <td><a href="https://www.damijing.com/item/237596" target="_blank" class="item-link item-name">天顶流丝供品</a></td>
+                    <td class="item-type tier-set">套装腿</td>
+                    <td class="item-stats">战贼僧龙</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237595" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebarrel_dark.jpg" class="item-img" alt="崇圣流丝供品"></a></td>
+                    <td><a href="https://www.damijing.com/item/237595" target="_blank" class="item-link item-name">崇圣流丝供品</a></td>
+                    <td class="item-type tier-set">套装腿</td>
+                    <td class="item-stats">骑牧萨</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237593" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebarrel_terra.jpg" class="item-img" alt="恐惧流丝供品"></a></td>
+                    <td><a href="https://www.damijing.com/item/237593" target="_blank" class="item-link item-name">恐惧流丝供品</a></td>
+                    <td class="item-type tier-set">套装腿</td>
+                    <td class="item-stats">死瞎术</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237594" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragebarrel_purple.jpg" class="item-img" alt="秘术流丝供品"></a></td>
+                    <td><a href="https://www.damijing.com/item/237594" target="_blank" class="item-link item-name">秘术流丝供品</a></td>
+                    <td class="item-type tier-set">套装腿</td>
+                    <td class="item-stats">法猎德</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237524" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_cloth_raidmageethereal_d_01.jpg" class="item-img" alt="蕾丝踏巢靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/237524" target="_blank" class="item-link item-name">蕾丝踏巢靴</a></td>
+                    <td class="item-type">布甲-脚部</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237552" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_shoulder_leather_raidrogueethereal_d_01.jpg" class="item-img" alt="亡缚肩甲"></a></td>
+                    <td><a href="https://www.damijing.com/item/237552" target="_blank" class="item-link item-name">亡缚肩甲</a></td>
+                    <td class="item-type">皮甲-肩部</td>
+                    <td class="item-stats">精通>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237522" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_mail_raidhunterethereal_d_01.jpg" class="item-img" alt="巨型缚命丝"></a></td>
+                    <td><a href="https://www.damijing.com/item/237522" target="_blank" class="item-link item-name">巨型缚命丝</a></td>
+                    <td class="item-type">锁甲-腰部</td>
+                    <td class="item-stats">爆击>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237545" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_plate_raidwarriorethereal_d_01.jpg" class="item-img" alt="丢弃的养料枷锁"></a></td>
+                    <td><a href="https://www.damijing.com/item/237545" target="_blank" class="item-link item-name">丢弃的养料枷锁</a></td>
+                    <td class="item-type">板甲-腕部</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 4号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">4号BOSS: 熔炉编织者阿拉兹</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237726" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_staff_2h_etherealraid_d_01.jpg" class="item-img" alt="科技法术的奇迹"></a></td>
+                    <td><a href="https://www.damijing.com/item/237726" target="_blank" class="item-link item-name">科技法术的奇迹</a></td>
+                    <td class="item-type">法杖-敏捷</td>
+                    <td class="item-stats">全能>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237737" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_sword_2h_etherealraid_d_01.jpg" class="item-img" alt="原初光子军刀"></a></td>
+                    <td><a href="https://www.damijing.com/item/237737" target="_blank" class="item-link item-name">原初光子军刀</a></td>
+                    <td class="item-type">双手剑-力量</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237724" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_offhand_1h_etherealraid_d_01.jpg" class="item-img" alt="深暗领域之虹"></a></td>
+                    <td><a href="https://www.damijing.com/item/237724" target="_blank" class="item-link item-name">深暗领域之虹</a></td>
+                    <td class="item-type">副手物品</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237570" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_ring03_etherealtechnomancerstyle_terra.jpg" class="item-img" alt="逻辑门：欧米伽"></a></td>
+                    <td><a href="https://www.damijing.com/item/237570" target="_blank" class="item-link item-name">逻辑门：欧米伽</a></td>
+                    <td class="item-type">手指</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242402" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_trinkettechnomancer_ritualengine.jpg" class="item-img" alt="阿拉兹的仪式熔炉"></a></td>
+                    <td><a href="https://www.damijing.com/item/242402" target="_blank" class="item-link item-name">阿拉兹的仪式熔炉</a></td>
+                    <td class="item-type">饰品-爆击</td>
+                    <td class="item-stats">全职业</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237592" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragepyramid_gold.jpg" class="item-img" alt="天顶征兆烧杯"></a></td>
+                    <td><a href="https://www.damijing.com/item/237592" target="_blank" class="item-link item-name">天顶征兆烧杯</a></td>
+                    <td class="item-type tier-set">套装头</td>
+                    <td class="item-stats">战贼僧龙</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237591" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragepyramid_dark.jpg" class="item-img" alt="崇圣征兆烧杯"></a></td>
+                    <td><a href="https://www.damijing.com/item/237591" target="_blank" class="item-link item-name">崇圣征兆烧杯</a></td>
+                    <td class="item-type tier-set">套装头</td>
+                    <td class="item-stats">骑牧萨</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237589" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragepyramid_terra.jpg" class="item-img" alt="恐惧征兆烧杯"></a></td>
+                    <td><a href="https://www.damijing.com/item/237589" target="_blank" class="item-link item-name">恐惧征兆烧杯</a></td>
+                    <td class="item-type tier-set">套装头</td>
+                    <td class="item-stats">死瞎术</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237590" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragepyramid_purple.jpg" class="item-img" alt="秘术征兆烧杯"></a></td>
+                    <td><a href="https://www.damijing.com/item/237590" target="_blank" class="item-link item-name">秘术征兆烧杯</a></td>
+                    <td class="item-type tier-set">套装头</td>
+                    <td class="item-stats">法猎德</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237538" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_cloth_raidwarlockethereal_d_01.jpg" class="item-img" alt="熔炉编织者的日志皮套"></a></td>
+                    <td><a href="https://www.damijing.com/item/237538" target="_blank" class="item-link item-name">熔炉编织者的日志皮套</a></td>
+                    <td class="item-type">布甲-腰部</td>
+                    <td class="item-stats">急速>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237553" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_leather_raiddruidethereal_d_01.jpg" class="item-img" alt="试验室测试软鞋"></a></td>
+                    <td><a href="https://www.damijing.com/item/237553" target="_blank" class="item-link item-name">试验室测试软鞋</a></td>
+                    <td class="item-type">皮甲-脚部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237529" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_chest_mail_raidhunterethereal_d_01.jpg" class="item-img" alt="收获的侍从制服"></a></td>
+                    <td><a href="https://www.damijing.com/item/237529" target="_blank" class="item-link item-name">收获的侍从制服</a></td>
+                    <td class="item-type">锁甲-胸部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237526" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_glove_plate_raiddeathknightethereal_d_01.jpg" class="item-img" alt="破损收容护手"></a></td>
+                    <td><a href="https://www.damijing.com/item/237526" target="_blank" class="item-link item-name">破损收容护手</a></td>
+                    <td class="item-type">板甲-手部</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- 第二行：5-8号BOSS -->
+    <div class="boss-row">
+        <!-- 5号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">5号BOSS: 狩魂猎手</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237727" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_glaive_1h_etherealraid_d_01.jpg" class="item-img" alt="塌缩相位之刃"></a></td>
+                    <td><a href="https://www.damijing.com/item/237727" target="_blank" class="item-link item-name">塌缩相位之刃</a></td>
+                    <td class="item-type">战刃</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237741" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_shield_1h_etherealraid_d_01.jpg" class="item-img" alt="黑洞视界"></a></td>
+                    <td><a href="https://www.damijing.com/item/237741" target="_blank" class="item-link item-name">黑洞视界</a></td>
+                    <td class="item-type">盾牌</td>
+                    <td class="item-stats">精通>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237569" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_necklace03_etherealtechnomancerstyle_gold.jpg" class="item-img" alt="暮焰的挣扎"></a></td>
+                    <td><a href="https://www.damijing.com/item/237569" target="_blank" class="item-link item-name">暮焰的挣扎</a></td>
+                    <td class="item-type">颈部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242401" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_manaforgetanktrinket3.jpg" class="item-img" alt="不息忿怒烙印"></a></td>
+                    <td><a href="https://www.damijing.com/item/242401" target="_blank" class="item-link item-name">不息忿怒烙印</a></td>
+                    <td class="item-type">饰品-爆击</td>
+                    <td class="item-stats">坦克</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242397" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_agidpsancientkareshirelic.jpg" class="item-img" alt="星海狩猎魔印"></a></td>
+                    <td><a href="https://www.damijing.com/item/242397" target="_blank" class="item-link item-name">星海狩猎魔印</a></td>
+                    <td class="item-type">饰品-敏捷</td>
+                    <td class="item-stats">输出</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237600" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragesphere_gold.jpg" class="item-img" alt="天顶渴望咒痕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237600" target="_blank" class="item-link item-name">天顶渴望咒痕</a></td>
+                    <td class="item-type tier-set">套装肩</td>
+                    <td class="item-stats">战贼僧龙</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237599" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragesphere_dark.jpg" class="item-img" alt="崇圣渴望咒痕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237599" target="_blank" class="item-link item-name">崇圣渴望咒痕</a></td>
+                    <td class="item-type tier-set">套装肩</td>
+                    <td class="item-stats">骑牧萨</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237597" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragesphere_terra.jpg" class="item-img" alt="恐惧渴望咒痕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237597" target="_blank" class="item-link item-name">恐惧渴望咒痕</a></td>
+                    <td class="item-type tier-set">套装肩</td>
+                    <td class="item-stats">死瞎术</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237598" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystoragesphere_purple.jpg" class="item-img" alt="秘术渴望咒痕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237598" target="_blank" class="item-link item-name">秘术渴望咒痕</a></td>
+                    <td class="item-type tier-set">套装肩</td>
+                    <td class="item-stats">法猎德</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237549" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_glove_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="血愤的粗糙利爪"></a></td>
+                    <td><a href="https://www.damijing.com/item/237549" target="_blank" class="item-link item-name">血愤的粗糙利爪</a></td>
+                    <td class="item-type">布甲-手部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237541" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_chest_leather_raiddemonhunterethereal_d_01.jpg" class="item-img" alt="悲夜的腐化外甲"></a></td>
+                    <td><a href="https://www.damijing.com/item/237541" target="_blank" class="item-link item-name">悲夜的腐化外甲</a></td>
+                    <td class="item-type">皮甲-胸部</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237554" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_mail_raidshamanethereal_d_01.jpg" class="item-img" alt="狂怒自由腰扣"></a></td>
+                    <td><a href="https://www.damijing.com/item/237554" target="_blank" class="item-link item-name">狂怒自由腰扣</a></td>
+                    <td class="item-type">锁甲-腰部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237561" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_plate_raidpaladinethereal_d_01_bracer.jpg" class="item-img" alt="噬心仇恨枷锁"></a></td>
+                    <td><a href="https://www.damijing.com/item/237561" target="_blank" class="item-link item-name">噬心仇恨枷锁</a></td>
+                    <td class="item-type">板甲-腕部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243305" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="侵攻者的流丝踏靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/243305" target="_blank" class="item-link item-name">侵攻者的流丝踏靴</a></td>
+                    <td class="item-type special-item">布甲-脚部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243306" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_leather_raidmonkethereal_d_01.jpg" class="item-img" alt="侵攻者的加固便鞋"></a></td>
+                    <td><a href="https://www.damijing.com/item/243306" target="_blank" class="item-link item-name">侵攻者的加固便鞋</a></td>
+                    <td class="item-type special-item">皮甲-脚部</td>
+                    <td class="item-stats">全能>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243308" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_mail_raidshamanethereal_d_01.jpg" class="item-img" alt="侵攻者的链甲战靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/243308" target="_blank" class="item-link item-name">侵攻者的链甲战靴</a></td>
+                    <td class="item-type special-item">锁甲-脚部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243307" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_plate_raidpaladinethereal_d_01_boot.jpg" class="item-img" alt="侵攻者的板甲战靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/243307" target="_blank" class="item-link item-name">侵攻者的板甲战靴</a></td>
+                    <td class="item-type special-item">板甲-脚部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 6号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">6号BOSS: 弗兰克提鲁斯</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237733" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_crossbow_2h_etherealraid_d_01.jpg" class="item-img" alt="裂痕魔流投射器"></a></td>
+                    <td><a href="https://www.damijing.com/item/237733" target="_blank" class="item-link item-name">裂痕魔流投射器</a></td>
+                    <td class="item-type">弩</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237728" target="_blank" class="item-image-link"><img src="https://render.worldofwarcraft.com/us/icons/56/inv_knife_1h_etherealraid_d_02.jpg" class="item-img" alt="虚空琉璃短匕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237728" target="_blank" class="item-link item-name">虚空琉璃短匕</a></td>
+                    <td class="item-type">匕首-智力</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237742" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_offhand_1h_etherealraid_d_02.jpg" class="item-img" alt="弗兰克提鲁斯的绝命"></a></td>
+                    <td><a href="https://www.damijing.com/item/237742" target="_blank" class="item-link item-name">弗兰克提鲁斯的绝命</a></td>
+                    <td class="item-type">副手物品</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242396" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_voidprism.jpg" class="item-img" alt="刚性虚空棱镜"></a></td>
+                    <td><a href="https://www.damijing.com/item/242396" target="_blank" class="item-link item-name">刚性虚空棱镜</a></td>
+                    <td class="item-type">饰品</td>
+                    <td class="item-stats">力敏输出</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242392" target="_blank" class="item-image-link"><img src="https://render.worldofwarcraft.com/us/icons/56/inv_112_raidtrinkets_intdps_ancientkareshirelic.jpg" class="item-img" alt="金刚虚空核心"></a></td>
+                    <td><a href="https://www.damijing.com/item/242392" target="_blank" class="item-link item-name">金刚虚空核心</a></td>
+                    <td class="item-type">饰品-精通</td>
+                    <td class="item-stats">智力</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237584" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystorageurn_gold.jpg" class="item-img" alt="天顶虚空琉璃污染物"></a></td>
+                    <td><a href="https://www.damijing.com/item/237584" target="_blank" class="item-link item-name">天顶虚空琉璃污染物</a></td>
+                    <td class="item-type tier-set">套装胸</td>
+                    <td class="item-stats">战贼僧龙</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237583" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystorageurn_dark.jpg" class="item-img" alt="崇圣虚空琉璃污染物"></a></td>
+                    <td><a href="https://www.damijing.com/item/237583" target="_blank" class="item-link item-name">崇圣虚空琉璃污染物</a></td>
+                    <td class="item-type tier-set">套装胸</td>
+                    <td class="item-stats">骑牧萨</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237581" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystorageurn_terra.jpg" class="item-img" alt="恐惧虚空琉璃污染物"></a></td>
+                    <td><a href="https://www.damijing.com/item/237581" target="_blank" class="item-link item-name">恐惧虚空琉璃污染物</a></td>
+                    <td class="item-type tier-set">套装胸</td>
+                    <td class="item-stats">死瞎术</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237582" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_etherealenergystorageurn_purple.jpg" class="item-img" alt="秘术虚空琉璃污染物"></a></td>
+                    <td><a href="https://www.damijing.com/item/237582" target="_blank" class="item-link item-name">秘术虚空琉璃污染物</a></td>
+                    <td class="item-type tier-set">套装胸</td>
+                    <td class="item-stats">法猎德</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237558" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="拼接琉璃护腕"></a></td>
+                    <td><a href="https://www.damijing.com/item/237558" target="_blank" class="item-link item-name">拼接琉璃护腕</a></td>
+                    <td class="item-type">布甲-腕部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237565" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_leather_raiddemonhunterethereal_d_01.jpg" class="item-img" alt="动能沙丘奔行靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/237565" target="_blank" class="item-link item-name">动能沙丘奔行靴</a></td>
+                    <td class="item-type">皮甲-脚部</td>
+                    <td class="item-stats">全能>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237536" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_helm_mail_raidshamanethereal_d_01.jpg" class="item-img" alt="星界废土之噬"></a></td>
+                    <td><a href="https://www.damijing.com/item/237536" target="_blank" class="item-link item-name">星界废土之噬</a></td>
+                    <td class="item-type">锁甲-头部</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237530" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_pant_plate_raiddeathknightethereal_d_01.jpg" class="item-img" alt="碎片熔接护腿"></a></td>
+                    <td><a href="https://www.damijing.com/item/237530" target="_blank" class="item-link item-name">碎片熔接护腿</a></td>
+                    <td class="item-type">板甲-腿部</td>
+                    <td class="item-stats">急速>全能</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 7号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">7号BOSS: 节点之王萨哈达尔</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237734" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_axe_1h_etherealraid_d_01.jpg" class="item-img" alt="破誓者的报偿"></a></td>
+                    <td><a href="https://www.damijing.com/item/237734" target="_blank" class="item-link item-name">破誓者的报偿</a></td>
+                    <td class="item-type">单手斧-力量</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237735" target="_blank" class="item-image-link"><img src="https://render.worldofwarcraft.com/us/icons/56/inv_sword_1h_etherealraid_d_01.jpg" class="item-img" alt="虚空琉璃君主之刃"></a></td>
+                    <td><a href="https://www.damijing.com/item/237735" target="_blank" class="item-link item-name">虚空琉璃君主之刃</a></td>
+                    <td class="item-type">单手剑-智力</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237740" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_knife_1h_etherealraid_d_02.jpg" class="item-img" alt="仇怨虚空之刺"></a></td>
+                    <td><a href="https://www.damijing.com/item/237740" target="_blank" class="item-link item-name">仇怨虚空之刺</a></td>
+                    <td class="item-type">匕首-敏捷</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242406" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_necklace02_etherealribbonorrunestyle_gold.jpg" class="item-img" alt="萨哈达尔的愚行"></a></td>
+                    <td><a href="https://www.damijing.com/item/242406" target="_blank" class="item-link item-name">萨哈达尔的愚行</a></td>
+                    <td class="item-type">颈部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242403" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_11_0_etherealraid_communicator_color4.jpg" class="item-img" alt="背信投射仪"></a></td>
+                    <td><a href="https://www.damijing.com/item/242403" target="_blank" class="item-link item-name">背信投射仪</a></td>
+                    <td class="item-type">饰品-急速</td>
+                    <td class="item-stats">输出</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242400" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_oathbindersauthority.jpg" class="item-img" alt="节点之王的指令"></a></td>
+                    <td><a href="https://www.damijing.com/item/242400" target="_blank" class="item-link item-name">节点之王的指令</a></td>
+                    <td class="item-type">饰品-精通</td>
+                    <td class="item-stats">治疗</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237548" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_helm_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="暮光暴君的面纱"></a></td>
+                    <td><a href="https://www.damijing.com/item/237548" target="_blank" class="item-link item-name">暮光暴君的面纱</a></td>
+                    <td class="item-type">布甲-头部</td>
+                    <td class="item-stats">爆击>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237556" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_cloth_raidwarlockethereal_d_01.jpg" class="item-img" alt="战痕役仆便鞋"></a></td>
+                    <td><a href="https://www.damijing.com/item/237556" target="_blank" class="item-link item-name">战痕役仆便鞋</a></td>
+                    <td class="item-type">布甲-脚部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237531" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_pant_leather_raidmonkethereal_d_01.jpg" class="item-img" alt="影卫精锐裹腿"></a></td>
+                    <td><a href="https://www.damijing.com/item/237531" target="_blank" class="item-link item-name">影卫精锐裹腿</a></td>
+                    <td class="item-type">皮甲-腿部</td>
+                    <td class="item-stats">全能>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237557" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_leather_raidrogueethereal_d_01.jpg" class="item-img" alt="死神的恐惧腰带"></a></td>
+                    <td><a href="https://www.damijing.com/item/237557" target="_blank" class="item-link item-name">死神的恐惧腰带</a></td>
+                    <td class="item-type">皮甲-腰部</td>
+                    <td class="item-stats">爆击>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237544" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_glove_mail_raidevokerethereal_d_01.jpg" class="item-img" alt="皇家虚鳞护手"></a></td>
+                    <td><a href="https://www.damijing.com/item/237544" target="_blank" class="item-link item-name">皇家虚鳞护手</a></td>
+                    <td class="item-type">锁甲-手部</td>
+                    <td class="item-stats">全能>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237555" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_mail_raidshamanethereal_d_01.jpg" class="item-img" alt="圣契约定护臂"></a></td>
+                    <td><a href="https://www.damijing.com/item/237555" target="_blank" class="item-link item-name">圣契约定护臂</a></td>
+                    <td class="item-type">锁甲-腕部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237532" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_plate_raidpaladinethereal_d_01_shoulder.jpg" class="item-img" alt="虚伪正义的道标"></a></td>
+                    <td><a href="https://www.damijing.com/item/237532" target="_blank" class="item-link item-name">虚伪正义的道标</a></td>
+                    <td class="item-type">板甲-肩部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237564" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_plate_raidwarriorethereal_d_01.jpg" class="item-img" alt="黑暗骑士军靴"></a></td>
+                    <td><a href="https://www.damijing.com/item/237564" target="_blank" class="item-link item-name">黑暗骑士军靴</a></td>
+                    <td class="item-type">板甲-脚部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- 8号BOSS -->
+        <div class="boss-table">
+            <div class="boss-header">8号BOSS: 诸界吞噬者迪门修斯</div>
+            <table>
+                <tr>
+                    <th style="width: 50px;">图片</th>
+                    <th>物品名称</th>
+                    <th>类型</th>
+                    <th>属性</th>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237725" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_mace_2h_etherealraid_d_01.jpg" class="item-img" alt="超质量碎星者"></a></td>
+                    <td><a href="https://www.damijing.com/item/237725" target="_blank" class="item-link item-name">超质量碎星者</a></td>
+                    <td class="item-type">双手锤-力量</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237731" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_mace_1h_etherealraid_d_02.jpg" class="item-img" alt="能层轻锤"></a></td>
+                    <td><a href="https://www.damijing.com/item/237731" target="_blank" class="item-link item-name">能层轻锤</a></td>
+                    <td class="item-type">单手锤-敏捷</td>
+                    <td class="item-stats">全能>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242405" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_ring02_etherealribbonorrunestyle_gold.jpg" class="item-img" alt="破碎灵魂指环"></a></td>
+                    <td><a href="https://www.damijing.com/item/242405" target="_blank" class="item-link item-name">破碎灵魂指环</a></td>
+                    <td class="item-type">手指</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242404" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_omnidpstrinket.jpg" class="item-img" alt="吞噬诸界之核"></a></td>
+                    <td><a href="https://www.damijing.com/item/242404" target="_blank" class="item-link item-name">吞噬诸界之核</a></td>
+                    <td class="item-type">饰品-全能</td>
+                    <td class="item-stats">坦克</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/242399" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_112_raidtrinkets_blobofswirlingvoid_terra.jpg" class="item-img" alt="遗世苍穹的尖鸣"></a></td>
+                    <td><a href="https://www.damijing.com/item/242399" target="_blank" class="item-link item-name">遗世苍穹的尖鸣</a></td>
+                    <td class="item-type">饰品-爆击</td>
+                    <td class="item-stats">输出</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237602" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_icon_shadowcouncilorb_purple.jpg" class="item-img" alt="饥渴虚空珍玩"></a></td>
+                    <td><a href="https://www.damijing.com/item/237602" target="_blank" class="item-link item-name">饥渴虚空珍玩</a></td>
+                    <td class="item-type">套装</td>
+                    <td class="item-stats">全职业</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237542" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_pant_cloth_raidmageethereal_d_01.jpg" class="item-img" alt="星辰导航长裤"></a></td>
+                    <td><a href="https://www.damijing.com/item/237542" target="_blank" class="item-link item-name">星辰导航长裤</a></td>
+                    <td class="item-type">布甲-腿部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237559" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_cloth_raidpriestethereal_d_01.jpg" class="item-img" alt="奇点束带"></a></td>
+                    <td><a href="https://www.damijing.com/item/237559" target="_blank" class="item-link item-name">奇点束带</a></td>
+                    <td class="item-type">布甲-腰部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237540" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_glove_leather_raiddruidethereal_d_01.jpg" class="item-img" alt="翼饰伽马护手"></a></td>
+                    <td><a href="https://www.damijing.com/item/237540" target="_blank" class="item-link item-name">翼饰伽马护手</a></td>
+                    <td class="item-type">皮甲-手部</td>
+                    <td class="item-stats">急速>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237562" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_bracer_leather_raiddemonhunterethereal_d_01.jpg" class="item-img" alt="时空压缩腕甲"></a></td>
+                    <td><a href="https://www.damijing.com/item/237562" target="_blank" class="item-link item-name">时空压缩腕甲</a></td>
+                    <td class="item-type">皮甲-腕部</td>
+                    <td class="item-stats">精通>急速</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237537" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_shoulder_mail_raidshamanethereal_d_01.jpg" class="item-img" alt="失败抗争之爪"></a></td>
+                    <td><a href="https://www.damijing.com/item/237537" target="_blank" class="item-link item-name">失败抗争之爪</a></td>
+                    <td class="item-type">锁甲-肩部</td>
+                    <td class="item-stats">急速>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237560" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_boot_mail_raidhunterethereal_d_01.jpg" class="item-img" alt="破碎空间护胫"></a></td>
+                    <td><a href="https://www.damijing.com/item/237560" target="_blank" class="item-link item-name">破碎空间护胫</a></td>
+                    <td class="item-type">锁甲-脚部</td>
+                    <td class="item-stats">急速>精通</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237535" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_plate_raidpaladinethereal_d_01_helm.jpg" class="item-img" alt="阿托席恩的深渊凝视"></a></td>
+                    <td><a href="https://www.damijing.com/item/237535" target="_blank" class="item-link item-name">阿托席恩的深渊凝视</a></td>
+                    <td class="item-type">板甲-头部</td>
+                    <td class="item-stats">精通>爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/237563" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_belt_plate_raiddeathknightethereal_d_01.jpg" class="item-img" alt="超密度裂变腰带"></a></td>
+                    <td><a href="https://www.damijing.com/item/237563" target="_blank" class="item-link item-name">超密度裂变腰带</a></td>
+                    <td class="item-type">板甲-腰部</td>
+                    <td class="item-stats">爆击>全能</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243365" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_mace_2h_etherealking_d_01.jpg" class="item-img" alt="虚空深渊"></a></td>
+                    <td><a href="https://www.damijing.com/item/243365" target="_blank" class="item-link item-name">虚空深渊</a></td>
+                    <td class="item-type special-item">双手锤-力敏</td>
+                    <td class="item-stats">爆击</td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/246565" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_misc_rune_01.jpg" class="item-img" alt="星瀚炉石"></a></td>
+                    <td><a href="https://www.damijing.com/item/246565" target="_blank" class="item-link item-name">星瀚炉石</a></td>
+                    <td class="item-type special-item">炉石</td>
+                    <td class="item-stats"></td>
+                </tr>
+                <tr>
+                    <td><a href="https://www.damijing.com/item/243061" target="_blank" class="item-image-link"><img src="https://static.damijing.com/wow/item/inv_cosmicdragonmount.jpg" class="item-img" alt="无缚吞星者"></a></td>
+                    <td><a href="https://www.damijing.com/item/243061" target="_blank" class="item-link item-name">无缚吞星者</a></td>
+                    <td class="item-type special-item">坐骑</td>
+                    <td class="item-stats">M尾王</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="note">
+        注：红色字样为特效物品，绿色字样为主动饰品，BOSS掉落列表最后深色部分为稀有掉落(M723 H710 PT704)，配方幻化掉落未列出
+    </div>
+
+    <!-- 引入damijing.com的tooltips脚本 -->
+    <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
+</body>
+
+    <!-- 代练工具脚本 -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // 选项卡切换功能
+            const tabButtons = document.querySelectorAll('.tab-btn');
+            const contentSections = document.querySelectorAll('.content-section');
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetTab = button.getAttribute('data-tab');
+                    
+                    // 更新按钮状态
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    // 更新内容显示
+                    contentSections.forEach(section => {
+                        section.classList.remove('active');
+                        if (section.id === targetTab) {
+                            section.classList.add('active');
+                        }
+                    });
+                });
+            });
+            
+            // 代练工具原有脚本
             const inputText = document.getElementById('inputText');
             const parseBtn = document.getElementById('parseBtn');
             const copyBtn = document.getElementById('copyBtn');
@@ -537,6 +1715,8 @@
             const keywordConfig = document.getElementById('keywordConfig');
             const resultBody = document.getElementById('resultBody');
             const notification = document.getElementById('notification');
+            const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+            const historyList = document.getElementById('historyList');
             
             // 职业颜色映射
             const classColors = {
@@ -552,7 +1732,7 @@
                 "术士": "#9482C9",
                 "萨满": "#0070DE",
                 "唤魔师": "#33937F",
-                "牧师": "#F0EBE0"  // 修改牧师颜色为#F0EBE0
+                "牧师": "#F0EBE0"
             };
             
             // 职业别名映射（不区分大小写）
@@ -651,6 +1831,55 @@
                     currentKeywords = JSON.parse(savedKeywords);
                 }
                 initKeywordInputs();
+            }
+            
+            // 保存到历史记录
+            function saveToHistory(text) {
+                if (!text.trim()) return;
+                
+                let history = JSON.parse(localStorage.getItem('wowOrderHistory') || '[]');
+                
+                // 避免重复添加
+                if (history.includes(text)) {
+                    history = history.filter(item => item !== text);
+                }
+                
+                history.unshift(text);
+                
+                // 只保留最近10条记录
+                if (history.length > 10) {
+                    history = history.slice(0, 10);
+                }
+                
+                localStorage.setItem('wowOrderHistory', JSON.stringify(history));
+                renderHistory();
+            }
+            
+            // 渲染历史记录
+            function renderHistory() {
+                const history = JSON.parse(localStorage.getItem('wowOrderHistory') || '[]');
+                
+                historyList.innerHTML = '';
+                
+                history.forEach((text, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'history-item';
+                    item.textContent = `记录 ${index + 1}: ${text.split('\n')[0].substring(0, 30)}...`;
+                    item.title = text;
+                    
+                    item.addEventListener('click', () => {
+                        inputText.value = text;
+                    });
+                    
+                    historyList.appendChild(item);
+                });
+            }
+            
+            // 清空历史记录
+            function clearHistory() {
+                localStorage.removeItem('wowOrderHistory');
+                renderHistory();
+                showNotification('历史记录已清空！');
             }
             
             // 根据职业别名获取标准职业名称
@@ -862,6 +2091,9 @@
                     `;
                     resultBody.appendChild(row);
                 }
+                
+                // 保存到历史记录
+                saveToHistory(text);
             }
             
             // 复制结果函数（使用Excel兼容格式）
@@ -1030,6 +2262,7 @@
             saveKeywordsBtn.addEventListener('click', saveKeywords);
             resetKeywordsBtn.addEventListener('click', resetKeywords);
             copyFullDataBtn.addEventListener('click', copyFullData);
+            clearHistoryBtn.addEventListener('click', clearHistory);
             
             // 关键字配置区域折叠/展开
             keywordConfig.querySelector('h3').addEventListener('click', function() {
@@ -1038,7 +2271,11 @@
             
             // 初始化
             loadKeywords();
+            renderHistory();
         });
     </script>
+
+    <!-- 团本掉落工具脚本 -->
+    <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
 </body>
 </html>
