@@ -2275,6 +2275,14 @@
 
     <!-- 团本掉落工具脚本 -->
     <script src="https://static.damijing.com/wow/open/tooltips.min.js"></script>
-
+<script>
+  let _wowDamijingOpenApi;
+  (function () {
+    setTimeout(_ => {
+      _wowDamijingOpenApi = new wowDamijingOpenApi();
+      _wowDamijingOpenApi.domInit();
+    }, 500)
+  })(window);
+</script>
 </body>
 </html>
