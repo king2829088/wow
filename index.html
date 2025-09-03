@@ -2171,22 +2171,31 @@
                         if (cells[i]) {
                             const td = document.createElement('td');
                             
-                            // WPS兼容格式
-                            td.style.color = '#000000';
-                            td.style.border = '1px solid transparent'; // 透明边框
-                            td.style.backgroundColor = 'transparent'; // 透明背景
-                            td.style.padding = '5px 8px';
-                            td.style.textAlign = 'center';
-                            td.style.verticalAlign = 'middle';
-                            td.style.wordWrap = 'break-word';
-                            td.style.fontFamily = 'Microsoft YaHei, sans-serif';
-                            td.style.fontSize = '11pt';
-                            
-                            // 只有角色名列保留背景色
-                            if (i === 3 && cells[i].style.backgroundColor) {
-                                td.style.backgroundColor = cells[i].style.backgroundColor;
-                                td.style.color = '#000000';
-                            }
+// 在循环创建行之前，添加这行代码确保行背景透明
+newRow.style.backgroundColor = 'transparent';
+
+// WPS兼容格式
+td.style.color = '#000000';
+td.style.border = 'none';
+td.style.backgroundColor = 'transparent'; // 确保背景透明
+td.style.padding = '5px 8px';
+td.style.textAlign = 'center';
+td.style.verticalAlign = 'middle';
+td.style.wordWrap = 'break-word';
+td.style.fontFamily = 'Microsoft YaHei, sans-serif';
+td.style.fontSize = '11pt';
+
+// 只有角色名列保留背景色
+if (i === 3 && cells[i].style.backgroundColor) {
+    td.style.backgroundColor = cells[i].style.backgroundColor;
+    td.style.color = '#000000';
+    td.style.border = 'none';
+} else {
+    // 确保其他单元格背景透明，覆盖任何继承的样式
+    td.style.backgroundColor = 'transparent';
+    // 特别处理：移除可能从原始行继承的任何背景色
+    td.style.backgroundImage = 'none';
+}
                             
                             td.textContent = cells[i].textContent;
                             newRow.appendChild(td);
@@ -2259,6 +2268,7 @@
                     notification.classList.remove('show');
                 }, 3000);
             }
+
             
             // 添加事件监听器
             parseBtn.addEventListener('click', parseMultipleTexts);
